@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿亮健身 - 增肌计划与食谱生成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0f7ff, #ffffff);
+            min-height: 100vh;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 工具页面样式 */
+        .tool-page {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        
+        :root{
+          --primary:#0ea5e9;
+          --primary-light:#38bdf8;
+          --success:#10b981;
+          --warning:#f59e0b;
+          --danger:#f43f5e;
+          --dark:#1e293b;
+          --light:#f8fafc;
+          --high:#bae6fd;
+          --med:#e0f2fe;
+          --low:#fef3c7;
+        }
+        
+        header{color:#0ea5e9;text-align:center;margin-bottom:24px;position:relative;}
+        header h1{font-size:1.8rem;margin-bottom:4px;font-weight:700}
+        header .subtitle{font-size:.9rem;color:#64748b}
+        
+        .top-row{display:flex;gap:16px;flex-wrap:wrap}
+        .top-row>section{
+          background:#fff;
+          border-radius:12px;
+          padding:16px;
+          box-shadow:0 1px 3px rgba(0,0,0,.08);
+          flex:1 1 260px;
+          min-width:260px;
+        }
+        .top-row h3{
+          font-size:1rem;
+          margin-bottom:10px;
+          color:#0ea5e9;
+          font-weight:600;
+        }
+        .basic-row,.macro-row{display:flex;gap:8px;flex-wrap:wrap}
+        .basic-row .input-group,.macro-row .input-group{flex:1 1 100px;display:flex;flex-direction:column}
+        .top-row label{font-size:.8rem;font-weight:600;margin-bottom:4px}
+        .top-row input,.top-row select{
+          padding:6px 8px;
+          font-size:.8rem;
+          border:1px solid #cbd5e1;
+          border-radius:6px;
+        }
+        
+        /* 增肌计划样式 */
+        .bulk-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+        .bulk-input-group{flex:1 1 120px;display:flex;flex-direction:column;}
+        .bulk-level-cards{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+        .bulk-level-card{flex:1 1 130px;border:1px solid #cbd5e1;border-radius:8px;padding:10px;text-align:center;cursor:pointer;transition:.2s;background:#fff;}
+        .bulk-level-card.selected{border-color:var(--primary);background:#e0f2fe;}
+        .bulk-level-card h4{font-size:.8rem;margin-bottom:4px;color:var(--primary);}
+        .bulk-level-card p{font-size:.65rem;margin:0;color:#64748b;}
+        .surplus-inputs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+        .surplus-input-group{flex:1 1 160px;display:flex;flex-direction:column;gap:4px;}
+        .surplus-input-group label{font-size:.75rem;color:#64748b;}
+        .surplus-input-group input{border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:.9rem;width:100%;background:#fff;}
+        .surplus-input-group input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(59,130,246,.15);}
+        .bulk-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+        .bulk-stat{flex:1 1 120px;background:#f0f9ff;border-radius:8px;padding:10px;text-align:center;}
+        .bulk-stat .value{font-size:1.1rem;font-weight:700;color:var(--primary);}
+        .bulk-stat .label{font-size:.7rem;color:#64748b;}
+        
+        .plan-cards{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+        .plan-card{flex:1 1 80px;border:1px solid #cbd5e1;border-radius:8px;padding:8px 4px;font-size:.7rem;text-align:center;cursor:pointer;transition:.2s;background:#fff;}
+        .plan-card.selected{border-color:var(--primary);background:#e0f2fe;}
+        .plan-card h4{font-size:.75rem;margin-bottom:2px;color:#0ea5e9}
+        .plan-card p{font-size:.6rem;margin:0;line-height:1.2;color:#64748b}
+        
+        .custom-plan{display:none;gap:4px;flex-wrap:wrap;margin-top:8px}
+        .custom-plan input{
+          flex:1 1 60px;
+          font-size:.7rem;
+          padding:4px 2px;
+          text-align:center;
+          border:1px solid #cbd5e1;
+          border-radius:4px;
+        }
+        
+        .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+        .btn-row button{
+          flex:1 1 100px;
+          padding:10px 0;
+          border:none;
+          border-radius:6px;
+          font-size:.85rem;
+          font-weight:600;
+          cursor:pointer;
+          color:#fff;
+          transition:.2s;
+        }
+        .btn-calc{background:var(--primary)}
+        .btn-down{background:var(--success)}
+        .btn-reset{background:var(--warning)}
+        .btn-row button:hover{opacity:.9}
+        
+        .table-wrap{overflow-x:auto;margin-top:16px}
+        table{width:100%;border-collapse:collapse;font-size:.75rem}
+        th,td{border:1px solid #e2e8f0;padding:6px 4px;text-align:center}
+        th{background:#f1f5f9;color:#0ea5e9;font-weight:600}
+        tbody tr:nth-child(odd){background:#fff}
+        tbody tr:nth-child(even){background:#f8fafc}
+        .editable{background:#fffbeb}
+        
+        /* 食谱生成器样式 */
+        .recipe-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        
+        .recipe-section h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: #0ea5e9;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .recipe-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .recipe-control {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .recipe-control label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .recipe-control select, .recipe-control input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+        
+        .weight-toggle {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .weight-toggle-btn {
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .weight-toggle-btn.active {
+            background: #0ea5e9;
+            color: white;
+            border-color: #0ea5e9;
+        }
+        
+        .recipe-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.75rem;
+        }
+        
+        .recipe-table th, .recipe-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .recipe-table th {
+            background: #f1f5f9;
+            color: #0ea5e9;
+            font-weight: 600;
+        }
+        
+        .recipe-table .meal-header {
+            background: #e0f2fe;
+            font-weight: 600;
+        }
+        
+        .recipe-table .food-name {
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .recipe-table .food-list {
+            text-align: left;
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+        
+        .recipe-table .food-item {
+            margin-bottom: 4px;
+        }
+        
+        .recipe-table .raw-weight {
+            color: #0ea5e9;
+        }
+        
+        .recipe-table .cooked-weight {
+            color: #10b981;
+        }
+        
+        .recipe-summary {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        
+        .recipe-summary-item {
+            flex: 1;
+            min-width: 100px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .recipe-summary-item .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .recipe-summary-item .label {
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+        
+        .notes{
+          background:#fff;
+          border-radius:12px;
+          box-shadow:0 1px 3px rgba(0,0,0,.08);
+          padding:16px 20px;
+          margin-top:20px;
+          font-size:.8rem;
+          line-height:1.6;
+          color:#475569;
+        }
+        .notes h3{margin-bottom:10px;color:#0ea5e9;font-size:1rem}
+        .notes ul{margin:0;padding-left:20px}
+        .notes li{margin-bottom:6px}
+        
+        footer{color:#94a3b8;text-align:center;font-size:.6rem;margin-top:20px}
+        
+        /* ===== 食物选择面板 ===== */
+        .food-selection-section{margin-top:8px}
+        .food-category-tabs{display:flex;gap:4px;margin-bottom:12px}
+        .food-category-tab{padding:10px 20px;background:var(--light);border:2px solid #e0e0e0;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+        .food-category-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+        .food-category-tab:hover{border-color:var(--primary)}
+        .food-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;max-height:350px;overflow-y:auto;padding:8px;border:1px solid #eee;border-radius:6px;background:#fafafa}
+        .food-card{border:2px solid #e0e0e0;border-radius:8px;padding:10px 12px;cursor:pointer;transition:.2s;background:#fff;font-size:.8rem;position:relative}
+        .food-card.selected{border-color:var(--primary);background:#e5f1ff;box-shadow:0 2px 8px rgba(52,152,219,.2)}
+        .food-card:hover{border-color:var(--primary);transform:translateY(-1px)}
+        .food-card .food-name{font-weight:700;margin-bottom:4px;font-size:.85rem}
+        .food-card .food-macros{color:#666;line-height:1.4}
+        .food-card .food-macros span{margin-right:6px;font-size:.75rem}
+        .food-card .check-mark{position:absolute;top:6px;right:8px;color:var(--primary);font-weight:bold;font-size:1rem;display:none}
+        .food-card.selected .check-mark{display:block}
+        .food-selection-summary{margin-top:12px;font-size:.8rem;color:#666;display:flex;gap:12px;flex-wrap:wrap}
+        .cat-count{background:var(--light);padding:4px 12px;border-radius:16px;font-weight:600}
+        .cat-count.warn{background:#fff3cd;color:#856404;border:1px solid #ffc107}
+        .food-warning{color:#e74c3c;font-size:.8rem;margin-top:8px;display:none;padding:6px 12px;background:#fff5f5;border-radius:4px}
+        .food-warning.show{display:block}
+        .food-actions{display:flex;gap:8px;margin-top:12px}
+        .food-reset-btn{padding:8px 20px;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;background:var(--warning);color:#fff}
+        .food-reset-btn:hover{opacity:.9}
+
+        /* 媒体查询：针对小屏幕设备的优化 */
+        @media (max-width: 480px) {
+          .basic-row .input-group {
+            flex: 1 1 100px !important;
+          }
+          
+          .tab-btn {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+          }
+          
+          .tool-page {
+            padding: 20px;
+          }
+          
+          header h1 {
+            font-size: 1.5rem;
+          }
+          
+          .recipe-table {
+            font-size: 0.65rem;
+          }
+          
+          .recipe-table th, .recipe-table td {
+            padding: 4px;
+          }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- 增肌计划工具 -->
+    <div id="bulk-plan-tool" class="container tool-page">
+        <header>
+            <h1>阿亮健身 - 增肌计划与食谱生成器</h1>
+            <p class="subtitle">小热量盈余 + 正氮平衡 | 参考来源:运动营养学、闪电增肌、健身营养书、凯圣王、自然王等</p>
+        </header>
+
+        <!-- 增肌计划部分 -->
+        <div id="bulk-plan" class="tab-content active">
+            <div class="top-row">
+                <!-- 基础信息 -->
+                <section>
+                    <h3>第一步：基础信息</h3>
+                    <div class="basic-row">
+                        <div class="input-group"><label>体重(kg)</label><input type="number" id="bulk-weight" value="70" min="40" max="150"></div>
+                        <div class="input-group"><label>身高(cm)</label><input type="number" id="bulk-height" value="175" min="140" max="220"></div>
+                        <div class="input-group"><label>年龄(岁)</label><input type="number" id="bulk-age" value="25" min="18" max="60"></div>
+                        <div class="input-group"><label>性别</label>
+                            <select id="bulk-gender"><option value="male">男</option><option value="female">女</option></select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 活动系数 -->
+                <section>
+                    <h3>第二步：日常活动强度</h3>
+                    <div class="bulk-level-cards" id="pal-cards">
+                        <div class="bulk-level-card selected" data-pal="1.0"><h4>久坐</h4><p>办公室/几乎无运动</p></div>
+                        <div class="bulk-level-card" data-pal="1.1"><h4>轻度活跃</h4><p>每周轻度1-3天</p></div>
+                        <div class="bulk-level-card" data-pal="1.375"><h4>中度活跃</h4><p>每周中度3-5天</p></div>
+                        <div class="bulk-level-card" data-pal="1.55"><h4>非常活跃</h4><p>每周高强度6-7天</p></div>
+                        <div class="bulk-level-card" data-pal="1.725"><h4>职业运动员</h4><p>每天高强度</p></div>
+                    </div>
+                </section>
+
+                <!-- 训练经验 -->
+                <section>
+                    <h3>第三步：训练经验</h3>
+                    <div class="bulk-level-cards" id="exp-cards">
+                        <div class="bulk-level-card selected" data-exp="novice"><h4>新手</h4><p>系统训练 &lt;1 年</p></div>
+                        <div class="bulk-level-card" data-exp="intermediate"><h4>中级</h4><p>系统训练 1-3 年</p></div>
+                        <div class="bulk-level-card" data-exp="advanced"><h4>高级</h4><p>系统训练 &gt;3 年</p></div>
+                    </div>
+                </section>
+
+                <!-- 热量盈余 -->
+                <section>
+                    <h3>第四步：热量盈余</h3>
+                    <div class="surplus-inputs">
+                        <div class="surplus-input-group">
+                            <label for="training-surplus">训练日盈余 (kcal)</label>
+                            <input type="number" id="training-surplus" value="200" step="50">
+                        </div>
+                        <div class="surplus-input-group">
+                            <label for="rest-deficit">休息日亏空 (kcal)</label>
+                            <input type="number" id="rest-deficit" value="-100" step="50">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 训练计划选择 -->
+                <section>
+                    <h3>第五步：选择训练计划</h3>
+                    <div class="plan-cards" id="bulk-plan-cards">
+                        <div class="plan-card selected" data-plan="1"><h4>练1休1</h4><p>循环</p></div>
+                        <div class="plan-card" data-plan="2"><h4>练2休1</h4><p>循环</p></div>
+                        <div class="plan-card" data-plan="3"><h4>练3休1</h4><p>循环</p></div>
+                        <div class="plan-card" data-plan="4"><h4>练4休1</h4><p>循环</p></div>
+                        <div class="plan-card" data-plan="custom"><h4>自定义</h4><p>自由</p></div>
+                    </div>
+                    <!-- 自定义输入区 -->
+                    <div class="custom-plan" id="bulk-custom-plan" style="display:none;">
+                        <input placeholder="周一" id="bulk-cus-mon">
+                        <input placeholder="周二" id="bulk-cus-tue">
+                        <input placeholder="周三" id="bulk-cus-wed">
+                        <input placeholder="周四" id="bulk-cus-thu">
+                        <input placeholder="周五" id="bulk-cus-fri">
+                        <input placeholder="周六" id="bulk-cus-sat">
+                        <input placeholder="周日" id="bulk-cus-sun">
+                    </div>
+                </section>
+
+                <!-- 结果汇总 -->
+                <section>
+                    <h3>计算结果</h3>
+                    <div class="bulk-stats">
+                        <div class="bulk-stat"><div class="value" id="bulk-bmr">0</div><div class="label">基础代谢(BMR)</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-tdee">0</div><div class="label">每日消耗(TDEE)</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-target">0</div><div class="label">训练日摄入热量</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-protein">0</div><div class="label">每日摄入蛋白质(g)</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-carb-display">0</div><div class="label">训练日碳水(g)</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-rest-carb-display">0</div><div class="label">休息日碳水(g)</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-fat-display">0</div><div class="label">每日脂肪(g)</div></div>
+                        <div class="bulk-stat"><div class="value" id="bulk-weekly-gain">—</div><div class="label">预计每周增重(kg)</div></div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 食物选择（单独一行） -->
+            <section style="margin-top:16px">
+                <h3>第六步：食物选择（按类别勾选你喜欢的食材）</h3>
+                <p style="font-size:.8rem;color:#666;margin-bottom:10px">勾选你常吃的食物，每类至少选1种。选定后食谱会使用这些食物生成。建议每类选择2-4种以获得更多变化。</p>
+                <div class="food-selection-section">
+                    <div class="food-category-tabs" id="food-tabs">
+                        <button class="food-category-tab active" data-food-cat="carb">碳水来源</button>
+                        <button class="food-category-tab" data-food-cat="protein">蛋白质来源</button>
+                        <button class="food-category-tab" data-food-cat="fat">脂肪来源</button>
+                        <button class="food-category-tab" data-food-cat="fruit">水果（加餐）</button>
+                    </div>
+                    <div id="foodGrid-carb" class="food-grid"></div>
+                    <div id="foodGrid-protein" class="food-grid" style="display:none"></div>
+                    <div id="foodGrid-fat" class="food-grid" style="display:none"></div>
+                    <div id="foodGrid-fruit" class="food-grid" style="display:none"></div>
+                    <div class="food-selection-summary">
+                        <span class="cat-count" id="count-carb">碳水: 0种</span>
+                        <span class="cat-count" id="count-protein">蛋白: 0种</span>
+                        <span class="cat-count" id="count-fat">脂肪: 0种</span>
+                        <span class="cat-count" id="count-fruit">水果: 0种</span>
+                    </div>
+                    <div class="food-warning" id="foodWarning">⚠️ 每类至少选择1种食物，否则无法生成食谱</div>
+                    <div class="food-actions">
+                        <button class="food-reset-btn" id="foodResetBtn">恢复默认食物</button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="btn-row">
+                <button class="btn-calc" id="bulk-calc">计算计划并生成食谱</button>
+                <button class="btn-down" id="bulk-dl">下载Excel(电脑端)</button>
+                <button class="btn-reset" id="bulk-reset">重置</button>
+            </div>
+
+            <!-- 详细宏量表格 -->
+            <div class="table-wrap">
+                <table id="bulk-week-table">
+                    <thead id="bulk-table-head"></thead>
+                    <tbody id="bulk-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- 食谱生成器 -->
+            <div class="recipe-section">
+                <h3>🍽️ 智能食谱生成器 (28天)</h3>
+
+                <div class="recipe-controls">
+                    <div class="recipe-control">
+                        <label>食谱类型</label>
+                        <select id="recipe-type-select">
+                            <option value="standard">标准</option>
+                            <option value="high-protein">高蛋白</option>
+                        </select>
+                    </div>
+                    <div class="recipe-control">
+                        <label>每日餐数</label>
+                        <select id="meal-count-select">
+                            <option value="3" selected>3餐</option>
+                            <option value="4">4餐</option>
+                            <option value="5">5餐</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 重量切换按钮 -->
+                <div class="weight-toggle">
+                    <button id="weight-toggle-btn" class="weight-toggle-btn active">
+                        <span>显示熟重</span>
+                    </button>
+                </div>
+                
+                <div class="table-wrap">
+                    <table class="recipe-table" id="recipe-table">
+                        <thead id="recipe-table-head"></thead>
+                        <tbody id="recipe-body"></tbody>
+                    </table>
+                </div>
+                
+                <div class="btn-row">
+                    <button class="btn-down" id="download-recipe-btn">下载食谱Excel</button>
+                    <button class="btn-reset" id="reset-recipe-btn">重置食谱</button>
+                </div>
+            </div>
+
+            <div class="notes">
+                <h3>📌 增肌计划说明</h3>
+                <ul>
+                    <li>蛋白质按训练经验分级：新手 1.6 g/kg、中级 1.8 g/kg、高级 2 g/kg。</li>
+                    <li>脂肪按训练经验分级：新手 0.9 g/kg、中级 1.0g/kg、高级 1.2 g/kg。</li>
+                    <li>碳水按训练经验分级：新手 3.5 g/kg、中级 4.5g/kg、高级 5 g/kg。</li>
+                    <li>剩余热量全部给碳水，休息日 -15% 碳水。</li>
+                    <li>智能食谱生成器可根据每日宏量需求自动生成包含生重和熟重的食谱。</li>
+                    <li>点击"显示生重/熟重"按钮可以切换重量显示方式。</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>阿亮健身营养智能工具© 2025 · 阿亮健身(凯门)</footer>
+    </div>
+
+    <script>
+// 通用工具函数
+const $ = id => document.getElementById(id)
+
+/* ========= 增肌计划功能 ========= */
+const bulkPalCards  = [...document.querySelectorAll('#pal-cards .bulk-level-card')];
+const bulkExpCards  = [...document.querySelectorAll('#exp-cards .bulk-level-card')];
+
+function selectBulkCard(list, target){
+    list.forEach(c=>c.classList.remove('selected'));
+    target.classList.add('selected');
+    calcBulk();
+}
+bulkPalCards.forEach(c=>c.addEventListener('click',()=>selectBulkCard(bulkPalCards,c)));
+bulkExpCards.forEach(c=>c.addEventListener('click',()=>selectBulkCard(bulkExpCards,c)));
+
+// 盈余输入框变化时重新计算
+$('training-surplus').addEventListener('input', calcBulk);
+$('rest-deficit').addEventListener('input', calcBulk);
+
+const bulkPlanCards = [...document.querySelectorAll('#bulk-plan-cards .plan-card')];
+const bulkCustomDiv = $('bulk-custom-plan');
+bulkPlanCards.forEach(c => c.addEventListener('click', () => {
+  bulkPlanCards.forEach(x => x.classList.remove('selected'));
+  c.classList.add('selected');
+  bulkCustomDiv.style.display = c.dataset.plan === 'custom' ? 'flex' : 'none';
+  calcBulk();
+}));
+
+function buildBulkParts(plan){
+  const trainParts = ['胸+三头','背+二头','腿+肩'];
+  let trainIdx = 0;
+
+  switch(plan){
+    case '1': { // 练1休1，周期2天
+      const cycle = [];
+      for (let i = 0; i < 28; i++) {
+        if (i % 2 === 0) { cycle.push(trainParts[trainIdx % 3]); trainIdx++; }
+        else { cycle.push('休息'); }
+      }
+      return cycle;
+    }
+    case '2': { // 练2休1，周期3天
+      const cycle = [];
+      for (let i = 0; i < 28; i++) {
+        const d = i % 3;
+        if (d < 2) { cycle.push(trainParts[trainIdx % 3]); trainIdx++; }
+        else { cycle.push('休息'); }
+      }
+      return cycle;
+    }
+    case '3': { // 练3休1，周期4天
+      const cycle = [];
+      for (let i = 0; i < 28; i++) {
+        const d = i % 4;
+        if (d < 3) { cycle.push(trainParts[trainIdx % 3]); trainIdx++; }
+        else { cycle.push('休息'); }
+      }
+      return cycle;
+    }
+    case '4': { // 练4休1，周期5天
+      const cycle = [];
+      for (let i = 0; i < 28; i++) {
+        const d = i % 5;
+        if (d < 4) { cycle.push(trainParts[trainIdx % 3]); trainIdx++; }
+        else { cycle.push('休息'); }
+      }
+      return cycle;
+    }
+    case 'custom': {
+      const p7 = ['mon','tue','wed','thu','fri','sat','sun'].map(d=>($(`bulk-cus-${d}`).value.trim()||'休息'));
+      const cycle = [];
+      for (let i = 0; i < 28; i++) cycle.push(p7[i % 7]);
+      return cycle;
+    }
+  }
+}
+
+const dayCN = ['周一','周二','周三','周四','周五','周六','周日'];
+function calcBulk(){
+  const w = +$('bulk-weight').value,
+        h = +$('bulk-height').value,
+        a = +$('bulk-age').value,
+        g = $('bulk-gender').value,
+        pal  = +document.querySelector('#pal-cards .selected').dataset.pal,
+        exp  = document.querySelector('#exp-cards .selected').dataset.exp,
+        trainSurplus = +$('training-surplus').value,
+        restDeficit = +$('rest-deficit').value;
+
+  const bmr = g==='male' ? 10*w+6.25*h-5*a+5 : 10*w+6.25*h-5*a-161;
+  const tdee = Math.round(bmr * pal);
+  const trainTarget = tdee + trainSurplus;
+  const restTarget = tdee + restDeficit;
+
+  const proMap = {novice: 1.6, intermediate: 1.8, advanced: 2.0};
+  const fatMap = {novice: 0.9, intermediate: 1.0, advanced: 1.0};
+  const carbMap= {novice: 3.5, intermediate: 4.5, advanced: 5.0};
+
+  const pro  = Math.round(w * proMap[exp]);
+  const fat  = Math.round(w * fatMap[exp]);
+  let carb = Math.round(w * carbMap[exp]);
+
+  const proKcal = pro * 4, fatKcal = fat * 9, carbKcal = carb * 4;
+  const leftKcal = trainTarget - (proKcal + fatKcal + carbKcal);
+  if (leftKcal > 0) carb += Math.round(leftKcal / 4);
+
+  const trainCarb = Math.round(carb * 1);
+  const restKcalLeft = restTarget - (proKcal + fatKcal + carbKcal);
+  const restCarb  = Math.round(Math.max(0, carb + restKcalLeft / 4));
+
+  $('bulk-bmr').textContent   = bmr + ' kcal';
+  $('bulk-tdee').textContent  = tdee + ' kcal';
+  $('bulk-target').textContent= trainTarget + ' kcal';
+  $('bulk-protein').textContent= pro + ' g';
+  $('bulk-carb-display').textContent = trainCarb + ' g';
+  $('bulk-fat-display').textContent = fat + ' g';
+  $('bulk-rest-carb-display').textContent = restCarb + ' g';
+
+  const plan = document.querySelector('#bulk-plan-cards .plan-card.selected').dataset.plan;
+  const parts28 = buildBulkParts(plan);
+
+  // 动态生成28列表头
+  const thead = $('bulk-table-head');
+  const headRow = document.createElement('tr');
+  headRow.innerHTML = '<th>项目</th>';
+  const today = new Date();
+  for (let i = 0; i < 28; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i + 1);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const weekday = ['日','一','二','三','四','五','六'][d.getDay()];
+    headRow.innerHTML += `<th>${month}/${day} 周${weekday}</th>`;
+  }
+  thead.innerHTML = '';
+  thead.appendChild(headRow);
+
+  // 动态生成28列表体
+  const tbody = $('bulk-table-body');
+  tbody.innerHTML = '';
+
+  const rows = [
+    { label: '训练部位', data: parts28, editable: false },
+    { label: '碳水(g)', data: parts28.map(p => p === '休息' ? restCarb : trainCarb) },
+    { label: '蛋白质(g)', data: Array(28).fill(pro) },
+    { label: '脂肪(g)', data: Array(28).fill(fat) },
+    { label: '热量(kcal)', data: parts28.map(p => { const c = p==='休息'?restCarb:trainCarb; return c*4+pro*4+fat*9; }) },
+    { label: '热量差', data: parts28.map(p => { const c = p==='休息'?restCarb:trainCarb; return (c*4+pro*4+fat*9) - tdee; }) }
+  ];
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    const labelTd = document.createElement('td');
+    labelTd.textContent = row.label;
+    labelTd.style.fontWeight = '600';
+    tr.appendChild(labelTd);
+    row.data.forEach((val, i) => {
+      const td = document.createElement('td');
+      if (row.editable === false && row.label === '训练部位') {
+        td.textContent = val;
+      } else if (row.label === '热量差') {
+        td.innerHTML = `<span style="color:${val>0?'#10b981':'#f43f5e'}">${val>0?'+':''}${val}</span>`;
+      } else {
+        td.textContent = val;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  const weeklyIntake = rows[4].data.reduce((s, v) => s + v, 0);
+  const weeklyExpenditure = tdee * 28;
+  const weeklySurplus = weeklyIntake - weeklyExpenditure;
+  const weeklyGain = (weeklySurplus / 7700).toFixed(2);
+  $('bulk-weekly-gain').textContent = weeklyGain;
+  generateWeeklyRecipe();
+}
+
+function editBulkCell(cell){
+  const old = cell.textContent;
+  cell.innerHTML = `<input style="width:100%;font-size:.75rem" value="${old}">`;
+  const inp = cell.querySelector('input');
+  inp.focus();
+  inp.onblur = inp.onkeydown = e => {
+    if(e.type==='blur'||e.key==='Enter') cell.textContent = inp.value||old;
+  };
+}
+
+function dlBulk() {
+  calcBulk();
+  const w   = +$('bulk-weight').value;
+  const h   = +$('bulk-height').value;
+  const a   = +$('bulk-age').value;
+  const g   = $('bulk-gender').value;
+  const pal = +document.querySelector('#pal-cards .selected').dataset.pal;
+  const exp = document.querySelector('#exp-cards .selected').dataset.exp;
+  const sur = +document.querySelector('#surplus-cards .selected').dataset.surplus;
+
+  const bmr   = +$('bulk-bmr').textContent.replace(' kcal','');
+  const tdee  = +$('bulk-tdee').textContent.replace(' kcal','');
+  const target= +$('bulk-target').textContent.replace(' kcal','');
+  const pro   = +$('bulk-protein').textContent.replace(' g','');
+  const fat   = +$('bulk-fat-display').textContent.replace(' g','');
+  const trainCarb = +$('bulk-carb-display').textContent.replace(' g','');
+  const restCarb  = +$('bulk-rest-carb-display').textContent.replace(' g','');
+  const weeklyGain = $('bulk-weekly-gain').textContent;
+
+  const proMap = {novice: 1.6, intermediate: 1.8, advanced: 2.0};
+  const fatMap = {novice: 0.9, intermediate: 1.0, advanced: 1.0};
+  const carbMap= {novice: 3.5, intermediate: 4.5, advanced: 5.0};
+
+  const basic = [
+    ['增肌计划(28天)'],
+    ['体重(kg)', w], ['身高(cm)', h], ['年龄(岁)', a],
+    ['性别', g==='male'?'男':'女'], ['运动系数', pal], ['每日盈余(kcal)', sur],
+    [],['计算过程'],
+    ['基础代谢(BMR)', `${bmr} kcal`], ['每日总消耗(TDEE)', `${tdee} kcal`],
+    ['目标热量', `${target} kcal`], ['预计每周增重', `${weeklyGain} kg`],
+    [`蛋白质 (${proMap[exp]} g/kg)`, `${pro} g`], [`脂肪 (${fatMap[exp]} g/kg)`, `${fat} g`],
+    [`训练日碳水`, `${trainCarb} g`], [`休息日碳水`, `${restCarb} g`],
+    [],['28天明细']
+  ];
+
+  const plan = [['项目']];
+  const today = new Date();
+  for (let i = 1; i <= 28; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const weekday = ['日','一','二','三','四','五','六'][d.getDay()];
+    plan[0].push(`${month}/${day} 周${weekday}`);
+  }
+  const tbody = document.querySelectorAll('#bulk-week-table tbody tr');
+  tbody.forEach(tr=>{
+    plan.push(Array.from(tr.children).map(td=>td.textContent));
+  });
+
+  const data = [...basic, ...plan];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '增肌计划28天');
+  XLSX.writeFile(wb, `增肌_${w}kg_28天.xlsx`);
+}
+
+function resetBulk(){
+  $('bulk-weight').value = 70;
+  $('bulk-height').value = 175;
+  $('bulk-age').value = 25;
+  $('bulk-gender').value = 'male';
+  document.querySelector('#pal-cards .bulk-level-card').click();
+  document.querySelector('#exp-cards .bulk-level-card').click();
+  $('training-surplus').value = 200;
+  $('rest-deficit').value = -100;
+  bulkPlanCards[0].click();
+  ['mon','tue','wed','thu','fri','sat','sun'].forEach(d=>$(`bulk-cus-${d}`).value='');
+  calcBulk();
+}
+
+$('bulk-calc').addEventListener('click', calcBulk);
+$('bulk-reset').addEventListener('click', resetBulk);
+$('bulk-dl').addEventListener('click', dlBulk);
+
+/* ========= 食谱生成器功能 ========= */
+/* ---------- 食物数据库（参考碳循环食谱结构） ---------- */
+const foodDatabase = {
+  oats:         { name: "燕麦",           cookedName: "燕麦",           carbs: 66, protein: 5, fat: 6.9, cookedCarbs: 66, cookedProtein: 5, cookedFat: 6.9, unit: "g", cookingMethod: "煮", category: "carb" },
+  wholeBread:   { name: "全麦面包",       cookedName: "全麦面包",       carbs: 41, protein: 5, fat: 3.4, cookedCarbs: 41, cookedProtein: 5, cookedFat: 3.4, unit: "g", cookingMethod: "直接食用", category: "carb" },
+  corn:         { name: "甜玉米",         cookedName: "熟甜玉米",       carbs: 38, protein: 6,   fat: 6,   cookedCarbs: 28, cookedProtein: 3,   cookedFat: 0.8, unit: "根", unitWeight: 250, cookingMethod: "煮/蒸", category: "carb" },
+  rice:         { name: "白米饭",         cookedName: "白米饭",         carbs: 77, protein: 2.2, fat: 0,   cookedCarbs: 28, cookedProtein: 0.6, cookedFat: 0,   unit: "g", cookingMethod: "煮", category: "carb" },
+  brownRice:    { name: "糙米",           cookedName: "糙米",           carbs: 70, protein: 2.7, fat: 0.9, cookedCarbs: 23, cookedProtein: 2.7, cookedFat: 0.9, unit: "g", cookingMethod: "煮", category: "carb" },
+  sweetPotato:  { name: "红薯",           cookedName: "红薯",           carbs: 30, protein: 1.6, fat: 0.1, cookedCarbs: 27, cookedProtein: 1.4, cookedFat: 0.1, unit: "g", cookingMethod: "蒸/烤", category: "carb" },
+  eggs:         { name: "鸡蛋",           cookedName: "鸡蛋",           carbs: 1.1, protein: 6.5, fat: 11,  cookedCarbs: 1.1, cookedProtein: 6.5, cookedFat: 11,  unit: "个", unitWeight: 50, cookingMethod: "煮", category: "protein" },
+  beef:         { name: "瘦牛肉",         cookedName: "瘦牛肉",         carbs: 0,  protein: 22,  fat: 5,   cookedCarbs: 0,  cookedProtein: 32,  cookedFat: 4,   unit: "g", cookingMethod: "煮/炒", category: "protein" },
+  chickenBreast:{ name: "鸡胸肉",         cookedName: "鸡胸肉",         carbs: 0,  protein: 23,  fat: 3.6, cookedCarbs: 0,  cookedProtein: 32,  cookedFat: 2,   unit: "g", cookingMethod: "煮/蒸", category: "protein" },
+  chickenThigh: { name: "鸡腿",           cookedName: "鸡腿",           carbs: 0,  protein: 20,  fat: 8,   cookedCarbs: 0,  cookedProtein: 28,  cookedFat: 10,  unit: "g", cookingMethod: "烤/煎", category: "protein" },
+  shrimp:       { name: "虾",             cookedName: "虾",             carbs: 0,  protein: 15,  fat: 3,   cookedCarbs: 0,  cookedProtein: 18,  cookedFat: 1,   unit: "g", cookingMethod: "烤/煎", category: "protein" },
+  almonds:      { name: "坚果",           cookedName: "坚果",           carbs: 21, protein: 20,  fat: 54,  cookedCarbs: 21, cookedProtein: 20,  cookedFat: 54,  unit: "g", cookingMethod: "直接食用", category: "fat" },
+  peanutButter: { name: "花生酱",         cookedName: "花生酱",         carbs: 20, protein: 25,  fat: 50,  cookedCarbs: 20, cookedProtein: 25,  cookedFat: 50,  unit: "g", cookingMethod: "涂抹", category: "fat" },
+  oliveOil:     { name: "橄榄油",         cookedName: "橄榄油",         carbs: 0,  protein: 0,   fat: 100, cookedCarbs: 0,  cookedProtein: 0,   cookedFat: 100, unit: "ml", unitWeight: 1, cookingMethod: "烹饪用", category: "fat" },
+  broccoli:     { name: "西兰花",         cookedName: "西兰花",         carbs: 7,  protein: 2.8, fat: 0.4, cookedCarbs: 7,  cookedProtein: 2.8, cookedFat: 0.4, unit: "g", cookingMethod: "蒸/炒", category: "vegetable" },
+  spinach:      { name: "菠菜",           cookedName: "菠菜",           carbs: 3.6, protein: 2.9, fat: 0.4, cookedCarbs: 3.6, cookedProtein: 2.9, cookedFat: 0.4, unit: "g", cookingMethod: "炒/烫", category: "vegetable" },
+  bellPepper:   { name: "彩椒",           cookedName: "彩椒",           carbs: 6,  protein: 0.9, fat: 0.2, cookedCarbs: 6,  cookedProtein: 0.9, cookedFat: 0.2, unit: "g", cookingMethod: "生食/炒", category: "vegetable" },
+  mushroom:     { name: "蘑菇",           cookedName: "蘑菇",           carbs: 3.3, protein: 3.1, fat: 0.3, cookedCarbs: 3.3, cookedProtein: 3.1, cookedFat: 0.3, unit: "g", cookingMethod: "炒/烤", category: "vegetable" },
+  carrot:       { name: "胡萝卜",         cookedName: "胡萝卜",         carbs: 10, protein: 0.9, fat: 0.2, cookedCarbs: 10, cookedProtein: 0.9, cookedFat: 0.2, unit: "g", cookingMethod: "生食/煮", category: "vegetable" },
+  cucumber:     { name: "黄瓜",           cookedName: "黄瓜",           carbs: 3.6, protein: 0.7, fat: 0.1, cookedCarbs: 3.6, cookedProtein: 0.7, cookedFat: 0.1, unit: "g", cookingMethod: "生食", category: "vegetable" },
+  tomato:       { name: "番茄",           cookedName: "番茄",           carbs: 4,  protein: 0.9, fat: 0.2, cookedCarbs: 4,  cookedProtein: 0.9, cookedFat: 0.2, unit: "g", cookingMethod: "生食/炒", category: "vegetable" },
+  // 水果（不计入营养素）
+  banana:       { name: "香蕉",           cookedName: "香蕉",           carbs: 23, protein: 1.1, fat: 0.3, unit: "个", unitWeight: 120, cookingMethod: "直接食用", category: "fruit" },
+  apple:        { name: "苹果",           cookedName: "苹果",           carbs: 14, protein: 0.3, fat: 0.2, unit: "个", unitWeight: 200, cookingMethod: "直接食用", category: "fruit" },
+  blueberry:    { name: "蓝莓",           cookedName: "蓝莓",           carbs: 14, protein: 0.7, fat: 0.3, unit: "g", cookingMethod: "直接食用", category: "fruit" },
+  kiwi:         { name: "猕猴桃",         cookedName: "猕猴桃",         carbs: 15, protein: 1.1, fat: 0.5, unit: "个", unitWeight: 75, cookingMethod: "直接食用", category: "fruit" },
+  orange:       { name: "橙子",           cookedName: "橙子",           carbs: 12, protein: 0.9, fat: 0.1, unit: "个", unitWeight: 180, cookingMethod: "直接食用", category: "fruit" },
+  grapefruit:   { name: "葡萄柚",         cookedName: "葡萄柚",         carbs: 11, protein: 0.8, fat: 0.1, unit: "个", unitWeight: 230, cookingMethod: "直接食用", category: "fruit" },
+  strawberry:   { name: "草莓",           cookedName: "草莓",           carbs: 8,  protein: 0.7, fat: 0.3, unit: "g", cookingMethod: "直接食用", category: "fruit" }
+};
+
+/* ========= 食物选择逻辑 ========= */
+const defaultFoods = { carb: ['corn', 'oats', 'wholeBread', 'rice'], protein: ['eggs', 'chickenBreast', 'chickenThigh'], fat: ['almonds', 'oliveOil'], fruit: ['banana', 'apple', 'kiwi'] };
+let selectedFoods = { carb: [...defaultFoods.carb], protein: [...defaultFoods.protein], fat: [...defaultFoods.fat], fruit: [...defaultFoods.fruit] };
+
+function loadFoodSelection() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('muscleRecipe_selectedFoods'));
+    if (saved && saved.carb && saved.protein && saved.fat) {
+      selectedFoods = saved;
+      if (!selectedFoods.fruit) selectedFoods.fruit = [...defaultFoods.fruit];
+    }
+  } catch(e) {}
+}
+function saveFoodSelection() {
+  localStorage.setItem('muscleRecipe_selectedFoods', JSON.stringify(selectedFoods));
+}
+function pickFromPool(pool, index) {
+  return pool[index % pool.length];
+}
+function updateFoodCounts() {
+  ['carb','protein','fat','fruit'].forEach(cat => {
+    const el = $(`count-${cat}`);
+    if (!el) return;
+    const n = selectedFoods[cat].length;
+    el.textContent = `${cat==='carb'?'碳水':cat==='protein'?'蛋白':cat==='fruit'?'水果':'脂肪'}: ${n}种`;
+    el.classList.toggle('warn', n === 0);
+  });
+  $('foodWarning').classList.toggle('show', !selectedFoods.carb.length || !selectedFoods.protein.length || !selectedFoods.fat.length);
+}
+function renderFoodSelection() {
+  ['carb','protein','fat','fruit'].forEach(cat => {
+    const grid = $(`foodGrid-${cat}`);
+    if (!grid) return;
+    Object.entries(foodDatabase).forEach(([key, f]) => {
+      if (f.category !== cat) return;
+      const div = document.createElement('div');
+      div.className = 'food-card' + (selectedFoods[cat].includes(key) ? ' selected' : '');
+      div.dataset.key = key;
+      const unitLabel = f.unit === 'g' ? '每100g' : f.unit === 'ml' ? '每ml' : `每${f.unit}${f.unitWeight?`(${f.unitWeight}g)`:''}`;
+      div.innerHTML = `<span class="check-mark">✓</span><div class="food-name">${f.name}</div><div class="food-macros"><span>C:${f.carbs}g</span><span>P:${f.protein}g</span><span>F:${f.fat}g</span></div><div style="font-size:.7rem;color:#999;margin-top:2px">${unitLabel}</div>`;
+      div.addEventListener('click', () => {
+        const idx = selectedFoods[cat].indexOf(key);
+        if (idx >= 0) selectedFoods[cat].splice(idx, 1); else selectedFoods[cat].push(key);
+        div.classList.toggle('selected');
+        saveFoodSelection();
+        updateFoodCounts();
+      });
+      grid.appendChild(div);
+    });
+  });
+  updateFoodCounts();
+}
+function switchFoodTab(cat) {
+  document.querySelectorAll('.food-category-tab').forEach(t => t.classList.toggle('active', t.dataset.foodCat === cat));
+  ['carb','protein','fat','fruit'].forEach(c => {
+    $(`foodGrid-${c}`).style.display = c === cat ? '' : 'none';
+  });
+}
+document.querySelectorAll('.food-category-tab').forEach(t => t.addEventListener('click', () => switchFoodTab(t.dataset.foodCat)));
+$('foodResetBtn').addEventListener('click', () => {
+  selectedFoods = { carb: [...defaultFoods.carb], protein: [...defaultFoods.protein], fat: [...defaultFoods.fat], fruit: [...defaultFoods.fruit] };
+  saveFoodSelection();
+  renderFoodSelection();
+});
+
+// 食物分类 - 保留为向后兼容，但实际使用selectedFoods
+const foodCategories = {
+  breakfastCarbs: ['oats', 'wholeBread', 'corn'],
+  lunchCarbs: ['rice', 'brownRice', 'sweetPotato'],
+  dinnerCarbs: ['rice', 'brownRice', 'sweetPotato'],
+  snackCarbs: ['wholeBread'],
+  breakfastProtein: ['eggs'],
+  lunchProtein: ['beef', 'chickenBreast', 'chickenThigh', 'shrimp'],
+  dinnerProtein: ['beef', 'chickenBreast', 'chickenThigh', 'shrimp'],
+  breakfastFat: ['almonds', 'peanutButter'],
+  lunchFat: ['oliveOil'],
+  dinnerFat: ['oliveOil'],
+  snackFat: ['almonds', 'peanutButter'],
+  vegetables: ['broccoli', 'spinach', 'bellPepper', 'mushroom', 'carrot', 'cucumber', 'tomato']
+};
+
+const getFood = k => foodDatabase[k];
+const round = v => Math.round(v);
+// 固定食物映射 - 一周每天的午餐和晚餐使用固定的碳水、蛋白质和蔬菜
+const fixedFoodMapping = {
+  // 周一
+  0: {
+    lunch: {
+      carb: "rice",
+      protein: "chickenBreast",
+      vegetable: "broccoli"
+    },
+    dinner: {
+      carb: "rice",
+      protein: "chickenBreast",
+      vegetable: "broccoli"
+    }
+  },
+  // 周二
+  1: {
+    lunch: {
+      carb: "brownRice",
+      protein: "chickenThigh",
+      vegetable: "bellPepper"
+    },
+    dinner: {
+      carb: "brownRice",
+      protein: "chickenThigh",
+      vegetable: "bellPepper"
+    }
+  },
+  // 周三
+  2: {
+    lunch: {
+      carb: "rice",
+      protein: "beef",
+      vegetable: "carrot"
+    },
+    dinner: {
+      carb: "brownRice",
+      protein: "beef",
+      vegetable: "carrot"
+    }
+  },
+  // 周四
+  3: {
+    lunch: {
+      carb: "brownRice",
+      protein: "shrimp",
+      vegetable: "cucumber"
+    },
+    dinner: {
+      carb: "rice",
+      protein: "shrimp",
+      vegetable: "cucumber"
+    }
+  },
+  // 周五
+  4: {
+    lunch: {
+      carb: "brownRice",
+      protein: "chickenThigh",
+      vegetable: "spinach"
+    },
+    dinner: {
+      carb: "rice",
+      protein: "chickenThigh",
+      vegetable: "spinach"
+    }
+  },
+  // 周六
+  5: {
+    lunch: {
+      carb: "rice",
+      protein: "beef",
+      vegetable: "tomato"
+    },
+    dinner: {
+      carb: "brownRice",
+      protein: "beef",
+      vegetable: "tomato"
+    }
+  },
+  // 周日
+  6: {
+    lunch: {
+      carb: "brownRice",
+      protein: "chickenBreast",
+      vegetable: "mushroom"
+    },
+    dinner: {
+      carb: "rice",
+      protein: "chickenBreast",
+      vegetable: "mushroom"
+    }
+  }
+};
+const mealTemplates = {
+  standard: {
+    breakfast: { protein: 0.2, carbs: 0.2, fat: 0.2 },
+    lunch: { protein: 0.35, carbs: 0.4, fat: 0.3 },
+    dinner: { protein: 0.35, carbs: 0.4, fat: 0.4 },
+    snack: { protein: 0.1, carbs: 0.1, fat: 0.1 }
+  },
+  vegetarian: {
+    breakfast: { protein: 0.25, carbs: 0.2, fat: 0.25 },
+    lunch: { protein: 0.35, carbs: 0.4, fat: 0.3 },
+    dinner: { protein: 0.3, carbs: 0.4, fat: 0.35 },
+    snack: { protein: 0.1, carbs: 0.1, fat: 0.1 }
+  },
+  "high-protein": {
+    breakfast: { protein: 0.3, carbs: 0.2, fat: 0.15 },
+    lunch: { protein: 0.4, carbs: 0.4, fat: 0.25 },
+    dinner: { protein: 0.4, carbs: 0.25, fat: 0.3 },
+    snack: { protein: 0.2, carbs: 0.05, fat: 0.1 }
+  }
+};
+
+let displayMode = 'raw';
+
+function toggleWeightDisplay() {
+  displayMode = displayMode === 'raw' ? 'cooked' : 'raw';
+  $('weight-toggle-btn').innerHTML = displayMode === 'raw' ? '<span>显示生重</span>' : '<span>显示熟重</span>';
+  generateWeeklyRecipe();
+}
+
+function getTrainingDays() {
+  const trainingParts = [];
+  const tbody = $('bulk-table-body');
+  if (tbody.children.length > 0) {
+    const firstRow = tbody.children[0];
+    for (let i = 1; i < firstRow.children.length; i++) {
+      trainingParts.push(firstRow.children[i].textContent);
+    }
+  }
+  return trainingParts;
+}
+
+function generateWeeklyRecipe() {
+  if (!selectedFoods.carb.length || !selectedFoods.protein.length || !selectedFoods.fat.length) return;
+  const recipeType = $('recipe-type-select').value;
+  const mealCount = parseInt($('meal-count-select').value);
+  const recipeBody = $('recipe-body');
+  const recipeHead = $('recipe-table-head');
+  recipeBody.innerHTML = '';
+  recipeHead.innerHTML = '';
+
+  const trainingParts = getTrainingDays();
+  const totalDays = trainingParts.length;
+
+  const headRow = document.createElement('tr');
+  headRow.innerHTML = '<th>餐次</th>';
+  for (let i = 0; i < totalDays; i++) {
+    headRow.innerHTML += `<th>第${i + 1}天</th>`;
+  }
+  recipeHead.appendChild(headRow);
+
+  const weeklyTargets = [];
+  for (let day = 0; day < totalDays; day++) {
+    const dayText = trainingParts[day];
+    const isRestDay = dayText.includes('休息');
+    const dailyCarbs = isRestDay ?
+      parseInt($('bulk-rest-carb-display').textContent.replace(' g', '')) :
+      parseInt($('bulk-carb-display').textContent.replace(' g', ''));
+    const dailyProtein = parseInt($('bulk-protein').textContent.replace(' g', ''));
+    const dailyFat = parseInt($('bulk-fat-display').textContent.replace(' g', ''));
+    weeklyTargets.push({ protein: dailyProtein, carbs: dailyCarbs, fat: dailyFat, isRestDay });
+  }
+
+  // 核心逻辑：目标热量为第一优先级
+  // 蛋白质和脂肪按g/kg固定，碳水由目标热量倒推：碳水 = (目标热量 - 蛋白*4 - 脂肪*9) / 4
+  // 3餐模式：早餐固定2-3个鸡蛋，午餐+晚餐补足全天蛋白质和脂肪
+
+  const template = mealTemplates[recipeType];
+  let mealAllocation = {};
+  if (mealCount === 3) {
+    // 3餐：蛋白质和碳水分配到午晚餐，早餐只放鸡蛋
+    mealAllocation = {
+      breakfast: { proteinRatio: 0.15, carbsRatio: 0.2, fatRatio: 0.25 },
+      lunch: { proteinRatio: 0.45, carbsRatio: 0.4, fatRatio: 0.4 },
+      dinner: { proteinRatio: 0.40, carbsRatio: 0.4, fatRatio: 0.35 }
+    };
+  } else if (mealCount === 4) {
+    mealAllocation = {
+      breakfast: { proteinRatio: 0.2, carbsRatio: 0.15, fatRatio: 0.2 },
+      lunch: { proteinRatio: 0.35, carbsRatio: 0.35, fatRatio: 0.3 },
+      dinner: { proteinRatio: 0.35, carbsRatio: 0.35, fatRatio: 0.4 },
+      snack: { proteinRatio: 0.1, carbsRatio: 0.15, fatRatio: 0.1 }
+    };
+  } else {
+    mealAllocation = {
+      breakfast: { proteinRatio: 0.2, carbsRatio: 0.15, fatRatio: 0.2 },
+      lunch: { proteinRatio: 0.25, carbsRatio: 0.35, fatRatio: 0.25 },
+      dinner: { proteinRatio: 0.25, carbsRatio: 0.35, fatRatio: 0.25 },
+      snack1: { proteinRatio: 0.15, carbsRatio: 0.1, fatRatio: 0.15 },
+      snack2: { proteinRatio: 0.15, carbsRatio: 0.05, fatRatio: 0.15 }
+    };
+  }
+
+  // 创建数组来存储每日实际摄入量和每餐的营养值
+  const dailyActuals = Array(totalDays).fill().map(() => ({ protein: 0, carbs: 0, fat: 0, kcal: 0 }));
+  const mealNutrients = {}; // 记录每餐的营养值，用于后续微调
+
+  const mealKeys = Object.keys(mealAllocation);
+  const lastMealKey = mealKeys[mealKeys.length - 1];
+  const lastIdx = mealKeys.length - 1;
+
+  // 第一步：生成所有非最后一餐的食物
+  mealKeys.forEach((meal, index) => {
+    if (meal === lastMealKey) return; // 最后一餐稍后处理
+    const row = document.createElement('tr');
+    const mealCell = document.createElement('td');
+    mealCell.textContent = getMealName(meal, index);
+    mealCell.className = 'meal-header';
+    row.appendChild(mealCell);
+
+    for (let day = 0; day < totalDays; day++) {
+      const dayTarget = weeklyTargets[day];
+      const alloc = mealAllocation[meal];
+      // 各餐的营养素按比例分配
+      const mealProtein = Math.round(dayTarget.protein * alloc.proteinRatio);
+      const mealFat = Math.round(dayTarget.fat * alloc.fatRatio);
+      // 碳水也按比例分配（不是按热量比例）
+      const mealCarbs = Math.round(dayTarget.carbs * alloc.carbsRatio);
+
+      const mealFoods = selectFoodsForMeal(mealProtein, mealCarbs, mealFat, recipeType, meal, day);
+      const foodStrings = renderFoodList(mealFoods);
+
+      const dayCell = document.createElement('td');
+      dayCell.style.textAlign = 'left';
+      const foodListDiv = document.createElement('div');
+      foodListDiv.className = 'food-list';
+      foodListDiv.textContent = foodStrings.join(' + ');
+      dayCell.appendChild(foodListDiv);
+      row.appendChild(dayCell);
+
+      // 精确计算：始终用生营养素 × 生重
+      const p = mealFoods.reduce((sum, f) => sum + Math.round(f.protein * f.g / 100), 0);
+      const c = mealFoods.reduce((sum, f) => sum + Math.round(f.carbs * f.g / 100), 0);
+      const ft = mealFoods.reduce((sum, f) => sum + Math.round(f.fat * f.g / 100), 0);
+      dailyActuals[day].protein += p;
+      dailyActuals[day].carbs += c;
+      dailyActuals[day].fat += ft;
+
+      // 记录这餐的营养值
+      if (!mealNutrients[day]) mealNutrients[day] = {};
+      mealNutrients[day][meal] = { protein: p, carbs: c, fat: ft };
+    }
+    recipeBody.appendChild(row);
+  });
+
+  // 第二步：生成最后一餐，碳水 = 剩余碳水（确保总碳水匹配目标）
+  {
+    const row = document.createElement('tr');
+    const mealCell = document.createElement('td');
+    mealCell.textContent = getMealName(lastMealKey, lastIdx);
+    mealCell.className = 'meal-header';
+    row.appendChild(mealCell);
+
+    for (let day = 0; day < totalDays; day++) {
+      const dayTarget = weeklyTargets[day];
+      // 剩余碳水 = 目标碳水 - 已摄入碳水
+      const remainingCarbs = Math.max(0, dayTarget.carbs - dailyActuals[day].carbs);
+
+      const alloc = mealAllocation[lastMealKey];
+      const mealProtein = Math.round(dayTarget.protein * alloc.proteinRatio);
+      const mealFat = Math.round(dayTarget.fat * alloc.fatRatio);
+
+      const mealFoods = selectFoodsForMeal(mealProtein, remainingCarbs, mealFat, recipeType, lastMealKey, day);
+      const foodStrings = renderFoodList(mealFoods);
+
+      const dayCell = document.createElement('td');
+      dayCell.style.textAlign = 'left';
+      const foodListDiv = document.createElement('div');
+      foodListDiv.className = 'food-list';
+      foodListDiv.textContent = foodStrings.join(' + ');
+      dayCell.appendChild(foodListDiv);
+      row.appendChild(dayCell);
+
+      const p = mealFoods.reduce((sum, f) => sum + Math.round(f.protein * f.g / 100), 0);
+      const c = mealFoods.reduce((sum, f) => sum + Math.round(f.carbs * f.g / 100), 0);
+      const ft = mealFoods.reduce((sum, f) => sum + Math.round(f.fat * f.g / 100), 0);
+      dailyActuals[day].protein += p;
+      dailyActuals[day].carbs += c;
+      dailyActuals[day].fat += ft;
+
+      // 记录这餐的营养值
+      mealNutrients[day][lastMealKey] = { protein: p, carbs: c, fat: ft };
+    }
+    recipeBody.appendChild(row);
+  }
+
+  // 第三步：确保碳水精确匹配目标（微调最后一餐）
+  for (let day = 0; day < totalDays; day++) {
+    const dayTarget = weeklyTargets[day];
+    const carbDiff = dayTarget.carbs - dailyActuals[day].carbs;
+
+    if (Math.abs(carbDiff) > 5) {
+      const lastMealRow = recipeBody.children[lastIdx];
+      if (lastMealRow) {
+        const dayCell = lastMealRow.children[day + 1];
+        if (dayCell) {
+          const foodList = dayCell.querySelector('.food-list');
+          if (foodList) {
+            const alloc = mealAllocation[lastMealKey];
+            const mealProtein = Math.round(dayTarget.protein * alloc.proteinRatio);
+            const mealFat = Math.round(dayTarget.fat * alloc.fatRatio);
+            // 最后一餐应该承担的碳水 = 目标碳水 - 非最后一餐已摄入的碳水
+            const nonLastCarbs = dailyActuals[day].carbs - mealNutrients[day][lastMealKey].carbs;
+            const finalCarbs = Math.max(0, dayTarget.carbs - nonLastCarbs);
+            const mealFoods = selectFoodsForMeal(mealProtein, finalCarbs, mealFat, recipeType, lastMealKey, day);
+            foodList.textContent = renderFoodList(mealFoods).join(' + ');
+
+            // 重新计算最后一餐的营养
+            const newLastMealProtein = mealFoods.reduce((sum, f) => sum + Math.round(f.protein * f.g / 100), 0);
+            const newLastMealCarbs = mealFoods.reduce((sum, f) => sum + Math.round(f.carbs * f.g / 100), 0);
+            const newLastMealFat = mealFoods.reduce((sum, f) => sum + Math.round(f.fat * f.g / 100), 0);
+
+            // 减去旧的，加上新的
+            const oldLastMeal = mealNutrients[day][lastMealKey];
+            dailyActuals[day].protein = dailyActuals[day].protein - oldLastMeal.protein + newLastMealProtein;
+            dailyActuals[day].carbs = dailyActuals[day].carbs - oldLastMeal.carbs + newLastMealCarbs;
+            dailyActuals[day].fat = dailyActuals[day].fat - oldLastMeal.fat + newLastMealFat;
+
+            mealNutrients[day][lastMealKey] = { protein: newLastMealProtein, carbs: newLastMealCarbs, fat: newLastMealFat };
+          }
+        }
+      }
+    }
+    dailyActuals[day].kcal = dailyActuals[day].protein * 4 + dailyActuals[day].carbs * 4 + dailyActuals[day].fat * 9;
+  }
+
+  // 水果加餐行（不计入营养素），插入在最后一餐（晚餐）前面
+  if (selectedFoods.fruit.length > 0) {
+    const fruitRow = document.createElement('tr');
+    const fruitCell = document.createElement('td');
+    fruitCell.textContent = '下午加餐（水果）';
+    fruitCell.className = 'meal-header';
+    fruitRow.appendChild(fruitCell);
+
+    for (let day = 0; day < totalDays; day++) {
+      const dayCell = document.createElement('td');
+      dayCell.style.textAlign = 'left';
+      const fruitPool = selectedFoods.fruit.map(id => foodDatabase[id]).filter(Boolean);
+      const fruit = pickFromPool(fruitPool, day);
+      const amount = fruit.unitWeight ? `1个` : `${100}${fruit.unit}`;
+      dayCell.textContent = `${fruit.name} ${amount}`;
+      dayCell.style.fontSize = '0.75rem';
+      dayCell.style.color = '#10b981';
+      fruitRow.appendChild(dayCell);
+    }
+    // 插入到最后一餐之前
+    const lastMealRow = recipeBody.children[lastIdx];
+    recipeBody.insertBefore(fruitRow, lastMealRow);
+  }
+
+  // 生成每日总计行
+  const summaryRow = document.createElement('tr');
+  const summaryCell = document.createElement('td');
+  summaryCell.textContent = '每日总计';
+  summaryCell.className = 'meal-header';
+  summaryRow.appendChild(summaryCell);
+
+  // 获取TDEE（每日消耗）
+  const tdee = parseInt($('bulk-tdee').textContent.replace(' kcal', ''));
+
+  for (let day = 0; day < totalDays; day++) {
+    const actual = dailyActuals[day];
+    const dayTarget = weeklyTargets[day];
+    const actualCalories = actual.protein * 4 + actual.carbs * 4 + actual.fat * 9;
+    const targetCalories = dayTarget.protein * 4 + dayTarget.carbs * 4 + dayTarget.fat * 9;
+
+    const dayCell = document.createElement('td');
+    dayCell.style.background = '#e0f2fe';
+    dayCell.style.fontSize = '0.7rem';
+    dayCell.style.textAlign = 'center';
+
+    const proteinDiff = actual.protein - dayTarget.protein;
+    const carbDiff2 = actual.carbs - dayTarget.carbs;
+    const fatDiff = actual.fat - dayTarget.fat;
+    const caloriesDiff = actualCalories - targetCalories;
+    const heatDiff = actualCalories - tdee; // 热量差 = 实际摄入 - TDEE
+
+    const proteinColor = Math.abs(proteinDiff) <= 5 ? '#10b981' : proteinDiff > 0 ? '#f59e0b' : '#ef4444';
+    const carbColor2 = Math.abs(carbDiff2) <= 5 ? '#10b981' : carbDiff2 > 0 ? '#f59e0b' : '#ef4444';
+    const fatColor = Math.abs(fatDiff) <= 3 ? '#10b981' : fatDiff > 0 ? '#f59e0b' : '#ef4444';
+    const caloriesColor = Math.abs(caloriesDiff) <= 50 ? '#10b981' : caloriesDiff > 0 ? '#f59e0b' : '#ef4444';
+    const heatDiffColor = heatDiff > 0 ? '#f59e0b' : '#ef4444';
+
+    dayCell.innerHTML = `
+      <div><strong>蛋白质: <span style="color:${proteinColor}">${actual.protein}g</span> (目标${dayTarget.protein}g)</strong></div>
+      <div><strong>碳水: <span style="color:${carbColor2}">${actual.carbs}g</span> (目标${dayTarget.carbs}g)</strong></div>
+      <div><strong>脂肪: <span style="color:${fatColor}">${actual.fat}g</span> (目标${dayTarget.fat}g)</strong></div>
+      <div>热量: <span style="color:${caloriesColor}">${actualCalories}kcal</span> (目标${targetCalories}kcal)</div>
+      <div>热量差: <span style="color:${heatDiffColor}">${heatDiff > 0 ? '+' : ''}${heatDiff}kcal</span></div>
+    `;
+    summaryRow.appendChild(dayCell);
+  }
+
+  recipeBody.appendChild(summaryRow);
+
+  // 补剂行
+  const supplementRow = document.createElement('tr');
+  const supplementHeader = document.createElement('td');
+  supplementHeader.textContent = '补剂';
+  supplementHeader.className = 'meal-header';
+  supplementRow.appendChild(supplementHeader);
+
+  for (let day = 0; day < totalDays; day++) {
+    const dayCell = document.createElement('td');
+    dayCell.textContent = '💊 鱼油2颗+肌酸3g+蛋白粉15g';
+    dayCell.style.fontSize = '0.7rem';
+    dayCell.style.textAlign = 'center';
+    dayCell.style.color = '#6b7280';
+    supplementRow.appendChild(dayCell);
+  }
+
+  recipeBody.appendChild(supplementRow);
+}
+
+function renderFoodList(mealFoods) {
+  return mealFoods.map(food => {
+    const rawWeight = Math.round(food.g);
+    let cookedWeight;
+    if (food.unitWeight && food.unit !== 'g') {
+      cookedWeight = rawWeight;
+    } else if (food.carbs > 0) {
+      cookedWeight = Math.round(rawWeight * (food.carbs / food.cookedCarbs));
+    } else if (food.protein > 0) {
+      cookedWeight = Math.round(rawWeight * (food.protein / food.cookedProtein));
+    } else if (food.fat > 0) {
+      cookedWeight = Math.round(rawWeight * (food.fat / food.cookedFat));
+    } else {
+      cookedWeight = rawWeight;
+    }
+    const onlyCookedFoods = ["鸡蛋", "全麦面包", "蛋白粉", "坚果"];
+    const isOnlyCooked = onlyCookedFoods.includes(food.name);
+    const displayName = displayMode === 'cooked' ? (food.cookedName || food.name) : food.name;
+    const displayType = isOnlyCooked ? '熟' : (displayMode === 'raw' ? '生' : '熟');
+
+    let displayWeight, displayUnit;
+    if (food.unitWeight && food.unit !== 'g') {
+      const weightToUse = isOnlyCooked ? cookedWeight : (displayMode === 'raw' ? rawWeight : cookedWeight);
+      const units = weightToUse / food.unitWeight;
+      if (units < 0.3) {
+        displayWeight = '';
+        displayUnit = food.unit;
+      } else if (units < 1.5) {
+        displayWeight = '0.5';
+        displayUnit = food.unit;
+      } else {
+        displayWeight = Math.round(units);
+        displayUnit = food.unit;
+      }
+    } else {
+      displayWeight = isOnlyCooked ? cookedWeight : (displayMode === 'raw' ? rawWeight : cookedWeight);
+      displayUnit = food.unit;
+    }
+
+    return `${displayName}(${displayType})${displayWeight}${displayUnit}`;
+  });
+}
+
+function getMealName(mealKey, index) {
+  const mealNames = {
+    breakfast: "早餐",
+    lunch: "午餐",
+    dinner: "晚餐",
+    snack: "加餐",
+    snack1: "上午加餐",
+    snack2: "下午加餐"
+  };
+  return mealNames[mealKey] || `第${index + 1}餐`;
+}
+
+function selectFoodsForMeal(proteinTarget, carbsTarget, fatTarget, recipeType, meal, dayIndex = 0) {
+  const items = [];
+
+  const carbPool = selectedFoods.carb.map(id => foodDatabase[id]).filter(Boolean);
+  const proteinPool = selectedFoods.protein.map(id => foodDatabase[id]).filter(Boolean);
+  const fatPool = selectedFoods.fat.map(id => foodDatabase[id]).filter(Boolean);
+  // 肉类蛋白质（排除鸡蛋）
+  const meatPool = proteinPool.filter(f => f.name !== "鸡蛋");
+  // 鸡蛋
+  const eggsFood = proteinPool.find(f => f.name === "鸡蛋");
+
+  // === 碳水 ===
+  // 早餐用早餐专属碳水（玉米、燕麦、全麦面包），午晚餐用米饭类碳水
+  const breakfastCarbNames = ["甜玉米", "玉米", "燕麦", "全麦面包"];
+  const dayCarbPool = meal === 'breakfast'
+    ? carbPool.filter(f => breakfastCarbNames.includes(f.name))
+    : carbPool.filter(f => !breakfastCarbNames.includes(f.name));
+  // 如果早餐池没有选中早餐专属碳水，回退到用全部碳水
+  const finalCarbPool = dayCarbPool.length > 0 ? dayCarbPool : carbPool;
+  if (finalCarbPool.length > 0) {
+    const carbFood = pickFromPool(finalCarbPool, dayIndex);
+    let g = Math.round(carbsTarget / carbFood.carbs * 100);
+    // 早餐燕麦上限60g，超出碳水由午晚餐吸收
+    if (meal === 'breakfast' && carbFood.name === "燕麦" && g > 60) {
+      g = 60;
+    }
+    items.push({ ...carbFood, g });
+  }
+
+  // === 蛋白质 ===
+  // 早餐固定2-3个鸡蛋，剩余蛋白质由午餐/晚餐补足
+  if (meal === 'breakfast') {
+    if (eggsFood) {
+      const eggCount = dayIndex % 2 === 0 ? 2 : 3;
+      const eggGrams = eggCount * 50;
+      items.push({ ...eggsFood, g: eggGrams });
+    }
+  } else if (meatPool.length > 0) {
+    const meatFood = pickFromPool(meatPool, dayIndex);
+    const needP = proteinTarget - items.reduce((s, it) => s + it.protein * it.g / 100, 0);
+    if (needP > 0) {
+      const g = Math.round(needP / meatFood.protein * 100);
+      items.push({ ...meatFood, g });
+    }
+  }
+
+  // === 脂肪 ===
+  if (fatPool.length > 0) {
+    const needF = fatTarget - items.reduce((s, it) => s + it.fat * it.g / 100, 0);
+    if (needF > 0.5) {
+      const fatFood = pickFromPool(fatPool, dayIndex);
+      let g = Math.round(needF / fatFood.fat * 100);
+      if (fatFood.name === "橄榄油" && g > 15) g = 15;
+      if (fatFood.name === "坚果" && (meal === 'lunch' || meal === 'dinner') && g > 20) g = 20;
+      if (fatFood.name === "坚果" && meal === 'breakfast' && g > 10) g = 10;
+      if (g > 0) {
+        items.push({ ...fatFood, g });
+      }
+    }
+  }
+
+  // === 蔬菜核心（午餐/晚餐固定150g） ===
+  if (meal === 'lunch' || meal === 'dinner') {
+    const vegPool = [
+      foodDatabase.broccoli, foodDatabase.spinach, foodDatabase.bellPepper,
+      foodDatabase.mushroom, foodDatabase.carrot, foodDatabase.cucumber, foodDatabase.tomato
+    ];
+    const vegFood = pickFromPool(vegPool, dayIndex);
+    if (vegFood) {
+      items.push({ ...vegFood, g: 150 });
+    }
+  }
+
+  return items;
+}
+
+function buildExcelFoodRow(food) {
+  const rawWeight = Math.round(food.g);
+  let cookedWeight;
+  if (food.unitWeight && food.unit !== 'g') {
+    cookedWeight = rawWeight;
+  } else if (food.carbs > 0) {
+    cookedWeight = Math.round(rawWeight * (food.carbs / food.cookedCarbs));
+  } else if (food.protein > 0) {
+    cookedWeight = Math.round(rawWeight * (food.protein / food.cookedProtein));
+  } else {
+    cookedWeight = rawWeight;
+  }
+  const onlyCookedFoods = ["鸡蛋", "全麦面包", "蛋白粉", "坚果"];
+  const isOnlyCooked = onlyCookedFoods.includes(food.name);
+  const displayRawWeight = isOnlyCooked ? cookedWeight : rawWeight;
+  const protein = Math.round(food.protein * food.g / 100);
+  const carbs = Math.round(food.carbs * food.g / 100);
+  const fat = Math.round(food.fat * food.g / 100);
+  const calories = Math.round((food.protein * 4 + food.carbs * 4 + food.fat * 9) * food.g / 100);
+  return ['', food.name, displayRawWeight, cookedWeight, food.cookingMethod, protein, carbs, fat, calories];
+}
+
+function getRandomFood(foodArray) {
+  return foodArray[Math.floor(Math.random() * foodArray.length)];
+}
+
+function downloadWeeklyRecipe() {
+  const recipeType = $('recipe-type-select').value;
+  const mealCount = parseInt($('meal-count-select').value);
+  const data = [
+    [`一周增肌食谱 (${recipeType === 'standard' ? '标准' : recipeType === 'vegetarian' ? '素食' : '高蛋白'}) - ${mealCount}餐/日`],
+    []
+  ];
+
+  const trainingParts = getTrainingDays();
+  const totalDays = trainingParts.length;
+  for (let day = 0; day < totalDays; day++) {
+    const d = new Date();
+    d.setDate(d.getDate() + day + 1);
+    const month = d.getMonth() + 1;
+    const dayNum = d.getDate();
+    const weekday = ['日','一','二','三','四','五','六'][d.getDay()];
+    const dayText = trainingParts[day];
+    const isRestDay = dayText.includes('休息');
+    data.push([`${month}/${dayNum} 周${weekday} (${isRestDay ? '休息日' : '训练日'})`]);
+    data.push(['餐次', '食物', '生重(g)', '熟重(g)', '烹饪方法', '蛋白质(g)', '碳水(g)', '脂肪(g)', '热量(kcal)']);
+
+    const dailyCarbs = isRestDay ?
+      parseInt($('bulk-rest-carb-display').textContent.replace(' g', '')) :
+      parseInt($('bulk-carb-display').textContent.replace(' g', ''));
+    const dailyProtein = parseInt($('bulk-protein').textContent.replace(' g', ''));
+    const dailyFat = parseInt($('bulk-fat-display').textContent.replace(' g', ''));
+    const template = mealTemplates[recipeType];
+
+    let mealAllocation = {};
+    if (mealCount === 3) {
+      mealAllocation = {
+        breakfast: { protein: 0.15, carbs: 0.2, fat: 0.25 },
+        lunch: { protein: 0.45, carbs: 0.4, fat: 0.4 },
+        dinner: { protein: 0.40, carbs: 0.4, fat: 0.35 }
+      };
+    } else if (mealCount === 4) {
+      mealAllocation = {
+        breakfast: { protein: 0.2, carbs: 0.15, fat: 0.2 },
+        lunch: { protein: 0.35, carbs: 0.35, fat: 0.3 },
+        dinner: { protein: 0.35, carbs: 0.35, fat: 0.4 },
+        snack: { protein: 0.1, carbs: 0.15, fat: 0.1 }
+      };
+    } else {
+      mealAllocation = {
+        breakfast: { protein: 0.2, carbs: 0.15, fat: 0.2 },
+        lunch: { protein: 0.25, carbs: 0.35, fat: 0.25 },
+        dinner: { protein: 0.25, carbs: 0.35, fat: 0.25 },
+        snack1: { protein: 0.15, carbs: 0.1, fat: 0.15 },
+        snack2: { protein: 0.15, carbs: 0.05, fat: 0.15 }
+      };
+    }
+
+    // 计算目标热量
+    const targetKcal = dailyProtein * 4 + dailyCarbs * 4 + dailyFat * 9;
+    const mKeys = Object.keys(mealAllocation);
+    const lastMealKey = mKeys[mKeys.length - 1];
+
+    let dayTotalProtein = 0, dayTotalCarbs = 0, dayTotalFat = 0, dayTotalCalories = 0;
+
+    // 第一步：生成非最后一餐
+    mKeys.forEach((meal, index) => {
+      if (meal === lastMealKey) return;
+      const mealProtein = Math.round(dailyProtein * mealAllocation[meal].protein);
+      const mealCarbs = Math.round(dailyCarbs * mealAllocation[meal].carbs);
+      const mealFat = Math.round(dailyFat * mealAllocation[meal].fat);
+      const mealFoods = selectFoodsForMeal(mealProtein, mealCarbs, mealFat, recipeType, meal, day);
+
+      data.push([getMealName(meal, index), '', '', '', '', '', '', '', '']);
+      mealFoods.forEach(food => {
+        const row = buildExcelFoodRow(food);
+        data.push(row);
+        dayTotalProtein += row[5];
+        dayTotalCarbs += row[6];
+        dayTotalFat += row[7];
+        dayTotalCalories += row[8];
+      });
+      data.push(['', '', '', '', '', '', '', '', '']);
+    });
+
+    // 第二步：最后一餐，碳水 = 目标碳水 - 已摄入碳水
+    {
+      const remainingCarbs = Math.max(0, dailyCarbs - dayTotalCarbs);
+      const alloc = mealAllocation[lastMealKey];
+      const mealProtein = Math.round(dailyProtein * alloc.protein);
+      const mealFat = Math.round(dailyFat * alloc.fat);
+      const mealFoods = selectFoodsForMeal(mealProtein, remainingCarbs, mealFat, recipeType, lastMealKey, day);
+
+      data.push([getMealName(lastMealKey, mKeys.length - 1), '', '', '', '', '', '', '', '']);
+      mealFoods.forEach(food => {
+        const row = buildExcelFoodRow(food);
+        data.push(row);
+        dayTotalProtein += row[5];
+        dayTotalCarbs += row[6];
+        dayTotalFat += row[7];
+        dayTotalCalories += row[8];
+      });
+      data.push(['', '', '', '', '', '', '', '', '']);
+    }
+
+    // 水果加餐（不计入营养素）
+    if (selectedFoods.fruit.length > 0) {
+      const fruitPool = selectedFoods.fruit.map(id => foodDatabase[id]).filter(Boolean);
+      const fruit = pickFromPool(fruitPool, day);
+      const amount = fruit.unitWeight ? `1个` : `${100}${fruit.unit}`;
+      data.push(['下午加餐（水果）', fruit.name, amount, '-', '直接食用', '-', '-', '-', '-']);
+      data.push(['', '', '', '', '', '', '', '', '']);
+    }
+
+    data.push(['每日总计', '', '', '', '', dayTotalProtein, dayTotalCarbs, dayTotalFat, dayTotalCalories]);
+    data.push(['目标值', '', '', '', '', dailyProtein, dailyCarbs, dailyFat, dailyProtein * 4 + dailyCarbs * 4 + dailyFat * 9]);
+    data.push(['差值', '', '', '', '', dayTotalProtein - dailyProtein, dayTotalCarbs - dailyCarbs, dayTotalFat - dailyFat,
+              dayTotalCalories - (dailyProtein * 4 + dailyCarbs * 4 + dailyFat * 9)]);
+    data.push([]);
+    data.push([]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '28天增肌食谱');
+  XLSX.writeFile(wb, `28天增肌食谱.xlsx`);
+}
+
+function resetRecipe() {
+  $('recipe-type-select').value = 'standard';
+  $('meal-count-select').value = '3';
+  displayMode = 'raw';
+  $('weight-toggle-btn').innerHTML = '<span>显示生重</span>';
+  generateWeeklyRecipe();
+}
+
+$('download-recipe-btn').addEventListener('click', downloadWeeklyRecipe);
+$('reset-recipe-btn').addEventListener('click', resetRecipe);
+$('weight-toggle-btn').addEventListener('click', toggleWeightDisplay);
+$('recipe-type-select').addEventListener('change', generateWeeklyRecipe);
+$('meal-count-select').addEventListener('change', generateWeeklyRecipe);
+
+document.querySelectorAll('.editable').forEach(cell=>{
+  cell.addEventListener('dblclick',()=>{
+    const v=cell.textContent
+    cell.innerHTML=`<input value="${v}" style="width:100%;font-size:.7rem">`
+    const inp=cell.querySelector('input')
+    inp.focus()
+    inp.onblur=inp.onkeydown=e=>{
+      if(e.type==='blur'||e.key==='Enter'){
+        cell.textContent=inp.value||v
+        generateWeeklyRecipe();
+      }
+    }
+  })
+});
+
+loadFoodSelection();
+renderFoodSelection();
+calcBulk();
+</script>
+</body>
+</html>

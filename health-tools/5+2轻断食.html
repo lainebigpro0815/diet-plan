@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿亮健身 - 5+2轻断食计划生成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+        body { background:linear-gradient(135deg,#e0f7ff,#ffffff); min-height:100vh; color:#334155; }
+        .container { max-width:1400px; margin:0 auto; padding:20px; }
+        .tool-page { background:#fff; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,.1); padding:40px; }
+        :root{ --primary:#0ea5e9; --success:#10b981; --warning:#f59e0b; --danger:#f43f5e; }
+        header{color:#0ea5e9;text-align:center;margin-bottom:24px}
+        header h1{font-size:1.8rem;margin-bottom:4px;font-weight:700}
+        header .subtitle{font-size:.9rem;color:#64748b}
+        .top-row{display:flex;gap:16px;flex-wrap:wrap}
+        .top-row>section{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);flex:1 1 260px;min-width:260px}
+        .top-row h3{font-size:1rem;margin-bottom:10px;color:#0ea5e9;font-weight:600}
+        .basic-row{display:flex;gap:8px;flex-wrap:wrap}
+        .basic-row .input-group{flex:1 1 100px;display:flex;flex-direction:column}
+        .top-row label{font-size:.8rem;font-weight:600;margin-bottom:4px}
+        .top-row input,.top-row select{padding:6px 8px;font-size:.8rem;border:1px solid #cbd5e1;border-radius:6px}
+        .fasting-day{background:#fee2e2;color:#dc2626;font-weight:bold}
+        .fasting-days{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+        .fasting-day-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;transition:.2s;min-width:120px}
+        .fasting-day-item:hover{border-color:#0ea5e9;box-shadow:0 1px 3px rgba(14,165,233,.1)}
+        .fasting-day-item input[type="checkbox"]{width:16px;height:16px;accent-color:#0ea5e9;cursor:pointer}
+        .fasting-day-item label{flex:1;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+        .fasting-day-item h4{margin:0;font-size:.85rem;font-weight:600;color:#334155}
+        .fasting-day-item p{margin:0;font-size:.7rem;color:#64748b}
+        .fasting-day-item input:checked+label h4{color:#0ea5e9}
+        .fasting-day-item input:checked+label p{color:#0ea5e9;font-weight:600}
+        .bulk-level-cards{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+        .bulk-level-card{flex:1 1 130px;border:1px solid #cbd5e1;border-radius:8px;padding:10px;text-align:center;cursor:pointer;transition:.2s;background:#fff}
+        .bulk-level-card.selected{border-color:var(--primary);background:#e0f2fe}
+        .bulk-level-card h4{font-size:.8rem;margin-bottom:4px;color:var(--primary)}
+        .bulk-level-card p{font-size:.65rem;margin:0;color:#64748b}
+        .quick-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+        .quick-stat{flex:1 1 120px;background:#f0f9ff;border-radius:8px;padding:10px;text-align:center}
+        .quick-stat .value{font-size:1.1rem;font-weight:700;color:var(--primary)}
+        .quick-stat .label{font-size:.7rem;color:#64748b}
+        .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+        .btn-row button{flex:1 1 100px;padding:10px 0;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;color:#fff;transition:.2s}
+        .btn-calc{background:var(--primary)}.btn-down{background:var(--success)}.btn-reset{background:var(--warning)}
+        .btn-row button:hover{opacity:.9}
+        .table-wrap{margin-top:16px}
+        table{width:100%;border-collapse:collapse;font-size:.75rem}
+        th,td{border:1px solid #e2e8f0;padding:6px 4px;text-align:center}
+        th{background:#f1f5f9;color:#0ea5e9;font-weight:600}
+        .target-info{background:#fff;border-radius:12px;padding:16px;margin-top:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+        .target-info h3{font-size:1rem;margin-bottom:12px;color:#0ea5e9;font-weight:600;text-align:center}
+        .weight-toggle{display:flex;justify-content:flex-end;margin-bottom:10px}
+        .weight-toggle-btn{padding:6px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:.8rem;cursor:pointer}
+        .weight-toggle-btn.active{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+        #month-table{width:100%;font-size:.7rem;border-collapse:collapse;table-layout:fixed}
+        #month-table th:first-child,#month-table td:first-child{width:55px;text-align:left;font-weight:600}
+        #month-table th:not(:first-child){width:calc((100% - 55px)/28);padding:3px 2px}
+        #month-table th,#month-table td{padding:3px 2px;text-align:center;border:1px solid #e5e7eb;vertical-align:top;white-space:normal;word-wrap:break-word}
+        #month-table th{background:#f1f5f9;color:#0ea5e9;font-weight:600}
+        #month-table td{text-align:left}
+        #month-table .food-list{text-align:left;font-size:.65rem;line-height:1.3;padding-left:2px;white-space:normal;word-break:break-all}
+        #month-table .food-item{margin-bottom:1px}
+        .week-header th{background:#e0f2fe;font-size:.7rem;color:#0ea5e9}
+        .week-header th.fasting-col{background:#fee2e2;color:#dc2626}
+        .notes{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:16px 20px;margin-top:20px;font-size:.8rem;line-height:1.6;color:#475569}
+        .notes h3{margin-bottom:10px;color:#0ea5e9;font-size:1rem}
+        .notes ul{margin:0;padding-left:20px}
+        .notes li{margin-bottom:6px}
+        footer{color:#94a3b8;text-align:center;font-size:.6rem;margin-top:20px}
+        .recipe-section{background:#fff;border-radius:12px;padding:16px;margin-top:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+        .recipe-section h3{font-size:1rem;margin-bottom:12px;color:#0ea5e9;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+        .food-panel{background:#fff;border-radius:12px;padding:16px;margin-top:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+        .food-panel h3{font-size:1rem;margin-bottom:12px;color:#0ea5e9;font-weight:600}
+        .food-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+        .food-tab{padding:6px 16px;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;background:#f8fafc;transition:.2s}
+        .food-tab.active{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+        .food-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+        .food-card{border:1px solid #cbd5e1;border-radius:8px;padding:10px;text-align:center;cursor:pointer;transition:.2s;background:#fff}
+        .food-card.selected{border-color:var(--primary);background:#e0f2fe}
+        .food-card h4{font-size:.8rem;margin-bottom:4px;color:#1e293b}
+        .food-card p{font-size:.65rem;color:#64748b;margin:0}
+        .macro-summary{background:#fff;border-radius:12px;padding:16px;margin-top:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+        .macro-summary h3{font-size:1rem;margin-bottom:12px;color:#0ea5e9;font-weight:600}
+        .electrolyte-warning{background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:.75rem;color:#92400e}
+        .electrolyte-warning strong{color:#b45309}
+        .day-cell{min-width:80px}
+        .day-cell.fasting{background:#fef2f2}
+        .day-cell .day-num{font-weight:700;font-size:.85rem}
+        .day-cell .day-type{font-size:.65rem;color:#64748b}
+        .day-cell .day-macro{font-size:.65rem;margin-top:2px}
+        .deficit-positive{color:#10b981;font-weight:bold}
+        .deficit-negative{color:#f43f5e;font-weight:bold}
+        @media(max-width:480px){.tool-page{padding:20px}header h1{font-size:1.5rem}}
+    </style>
+</head>
+<body>
+    <div id="fivetwo-tool" class="container tool-page">
+        <header>
+            <h1>阿亮健身 - 5+2轻断食计划生成器</h1>
+            <p class="subtitle">科学轻断食，健康减脂 | 参考来源: 5+2轻断食法、运动营养学</p>
+        </header>
+
+        <div class="top-row">
+            <section>
+                <h3>第一步：输入基础信息</h3>
+                <div class="basic-row">
+                    <div class="input-group"><label>当前体重(kg)</label><input type="number" id="fivetwo-weight" value="75" min="30" max="200"></div>
+                    <div class="input-group"><label>身高(cm)</label><input type="number" id="fivetwo-height" value="175" min="140" max="220"></div>
+                    <div class="input-group"><label>年龄(岁)</label><input type="number" id="fivetwo-age" value="30" min="18" max="80"></div>
+                    <div class="input-group"><label>性别</label><select id="fivetwo-gender"><option value="male">男</option><option value="female">女</option></select></div>
+                </div>
+            </section>
+
+            <section>
+                <h3>第二步：选择断食日，断食日不能连续</h3>
+                <div class="fasting-days" id="fasting-days">
+                    <div class="fasting-day-item"><input type="checkbox" id="fasting-一" checked><label for="fasting-一"><h4>周一</h4><p>断食日</p></label></div>
+                    <div class="fasting-day-item"><input type="checkbox" id="fasting-二"><label for="fasting-二"><h4>周二</h4><p>正常日</p></label></div>
+                    <div class="fasting-day-item"><input type="checkbox" id="fasting-三"><label for="fasting-三"><h4>周三</h4><p>正常日</p></label></div>
+                    <div class="fasting-day-item"><input type="checkbox" id="fasting-四" checked><label for="fasting-四"><h4>周四</h4><p>断食日</p></label></div>
+                    <div class="fasting-day-item"><input type="checkbox" id="fasting-五"><label for="fasting-五"><h4>周五</h4><p>正常日</p></label></div>
+                    <div class="fasting-day-item"><input type="checkbox" id="fasting-六"><label for="fasting-六"><h4>周六</h4><p>正常日</p></label></div>
+                    <div class="fasting-day-item" style="grid-column:span 2;margin:0 auto"><input type="checkbox" id="fasting-日"><label for="fasting-日"><h4>周日</h4><p>正常日</p></label></div>
+                </div>
+            </section>
+
+            <section>
+                <h3>第三步：日常活动水平</h3>
+                <div class="bulk-level-cards" id="activity-cards">
+                    <div class="bulk-level-card selected" data-activity="1.2"><h4>久坐</h4><p>办公室/几乎无运动</p></div>
+                    <div class="bulk-level-card" data-activity="1.375"><h4>轻度活跃</h4><p>每周轻度1-3天</p></div>
+                    <div class="bulk-level-card" data-activity="1.55"><h4>中度活跃</h4><p>每周中度3-5天</p></div>
+                </div>
+            </section>
+
+            <section>
+                <h3>第四步：训练计划</h3>
+                <div class="bulk-level-cards" id="training-cards"></div>
+                <div id="training-schedule" style="margin-top:8px;font-size:.75rem;color:#64748b"></div>
+            </section>
+
+            <section>
+                <h3>第五步：非断食日热量缺口</h3>
+                <div class="basic-row">
+                    <div class="input-group"><label>热量亏空(kcal)</label><input type="number" id="fivetwo-deficit" value="200" min="0" max="1000" step="50"></div>
+                </div>
+                <p style="font-size:.7rem;color:#64748b;margin-top:8px">默认亏空200kcal，数值越大减脂越快但越难坚持</p>
+            </section>
+
+            <section>
+                <h3>您的5+2计划</h3>
+                <div class="quick-stats">
+                    <div class="quick-stat"><div class="value" id="fivetwo-bmr">0</div><div class="label">基础代谢</div></div>
+                    <div class="quick-stat"><div class="value" id="fivetwo-tdee">0</div><div class="label">每日消耗</div></div>
+                    <div class="quick-stat"><div class="value" id="fivetwo-target">0</div><div class="label">非断食日热量</div></div>
+                    <div class="quick-stat"><div class="value" id="fivetwo-fasting">0</div><div class="label">断食日热量</div></div>
+                </div>
+            </section>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-calc" id="fivetwo-calc">计算计划</button>
+            <button class="btn-down" id="fivetwo-dl">下载Excel(电脑端)</button>
+            <button class="btn-down" id="fivetwo-recipe-dl">下载食谱Excel</button>
+            <button class="btn-reset" id="fivetwo-reset">重置</button>
+        </div>
+
+        <div class="macro-summary" id="macro-summary">
+            <h3>📊 一周宏量营养总览</h3>
+            <div class="table-wrap">
+                <table id="macro-table">
+                    <thead><tr><th>天数</th><th>类型</th><th>碳水(g)</th><th>蛋白质(g)</th><th>脂肪(g)</th><th>总热量(kcal)</th><th>训练</th></tr></thead>
+                    <tbody id="macro-body"></tbody>
+                </table>
+            </div>
+            <div id="electrolyte-warnings"></div>
+        </div>
+
+        <div class="food-panel" id="food-selection-panel">
+            <h3>🥗 食物选择（按类别勾选你喜欢的食材）</h3>
+            <div class="food-tabs" id="food-tabs"></div>
+            <div class="food-grid" id="food-grid"></div>
+        </div>
+
+        <div class="target-info">
+            <h3>一月轻断食计划<br>【5+2食谱 + 28天完整展示】</h3>
+            <div class="weight-toggle">
+                <button class="weight-toggle-btn active" data-mode="cooked"><span>显示熟重</span></button>
+                <button class="weight-toggle-btn" data-mode="raw"><span>显示生重</span></button>
+            </div>
+            <div class="table-wrap">
+                <table id="month-table">
+                    <tbody id="recipe-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="notes">
+            <h3>📌 5+2轻断食说明</h3>
+            <ul>
+                <li><strong>电解质补充：</strong>断食日需要补充电解质,推荐菠菜、蘑菇、竹笋等高钾高镁蔬菜</li>
+                <li><strong>训练日营养：</strong>训练日适当增加碳水和蛋白质,休息日降低碳水摄入</li>
+                <li><strong>水分补充：</strong>断食期间多喝水，有助于控制饥饿感</li>
+                <li><strong>适应期：</strong>前3-7天为适应期，可能出现轻微不适，属正常现象</li>
+                <li><strong>不适合人群：</strong>孕妇、哺乳期、有进食障碍史、胃溃疡、糖尿病患者慎用</li>
+                <li><strong>断食日热量：</strong>男性900kcal，女性600kcal</li>
+                <li><strong>非断食日：</strong>碳水55%，蛋白质1.6-2.0g/每公斤，脂肪0.5-1.0g/每公斤</li>
+            </ul>
+        </div>
+
+        <footer>阿亮健身营养智能工具© 2025 · 阿亮健身(凯门)</footer>
+    </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const round=v=>Math.round(v);
+
+/* 食物数据库 */
+const foodDatabase={
+  oats:{name:"燕麦",carbs:66,protein:13,fat:6.9,cookedCarbs:66,cookedProtein:13,cookedFat:6.9,sodium:3,potassium:350,magnesium:120,unit:"g",cookingMethod:"煮",breakfast:true,lunch:false,dinner:false},
+  wholeBread:{name:"全麦面包",carbs:41,protein:13,fat:3.4,cookedCarbs:41,cookedProtein:13,cookedFat:3.4,sodium:400,potassium:200,magnesium:80,unit:"g",cookingMethod:"直接食用",breakfast:true,lunch:false,dinner:false},
+  corn:{name:"甜玉米",carbs:38,protein:6,fat:6,cookedCarbs:38,cookedProtein:6,cookedFat:6,sodium:2,potassium:270,magnesium:30,unit:"根",unitWeight:250,cookingMethod:"煮/蒸",breakfast:true,lunch:false,dinner:false},
+  rice:{name:"白米饭",carbs:77,protein:7.2,fat:0,cookedCarbs:28,cookedProtein:2.6,cookedFat:0,sodium:1,potassium:30,magnesium:10,unit:"g",cookingMethod:"煮",breakfast:false,lunch:true,dinner:true},
+  brownRice:{name:"糙米",carbs:70,protein:2.7,fat:0.9,cookedCarbs:23,cookedProtein:2.7,cookedFat:0.9,sodium:5,potassium:100,magnesium:80,unit:"g",cookingMethod:"煮",breakfast:false,lunch:true,dinner:true},
+  sweetPotato:{name:"红薯",carbs:30,protein:1.6,fat:0.1,cookedCarbs:27,cookedProtein:1.4,cookedFat:0.1,sodium:6,potassium:400,magnesium:20,unit:"g",cookingMethod:"蒸/烤",breakfast:false,lunch:true,dinner:true},
+  eggs:{name:"鸡蛋",carbs:1.1,protein:6.5,fat:5,cookedCarbs:1.1,cookedProtein:6.5,cookedFat:4,sodium:120,potassium:130,magnesium:10,unit:"个",unitWeight:50,cookingMethod:"煮",breakfast:true,lunch:false,dinner:false},
+  beef:{name:"瘦牛肉",carbs:0,protein:22,fat:5,cookedCarbs:0,cookedProtein:32,cookedFat:4,sodium:50,potassium:320,magnesium:20,unit:"g",cookingMethod:"煮/炒",breakfast:false,lunch:true,dinner:true},
+  chickenBreast:{name:"鸡胸肉",carbs:0,protein:23,fat:3.6,cookedCarbs:0,cookedProtein:32,cookedFat:2,sodium:45,potassium:300,magnesium:25,unit:"g",cookingMethod:"煮/蒸",breakfast:false,lunch:true,dinner:true},
+  chickenThigh:{name:"鸡腿",carbs:0,protein:20,fat:8,cookedCarbs:0,cookedProtein:28,cookedFat:10,sodium:60,potassium:250,magnesium:18,unit:"g",cookingMethod:"烤/煎",breakfast:false,lunch:true,dinner:true},
+  shrimp:{name:"虾",carbs:0,protein:15,fat:3,cookedCarbs:0,cookedProtein:18,cookedFat:1,sodium:300,potassium:200,magnesium:30,unit:"g",cookingMethod:"烤/煎",breakfast:false,lunch:true,dinner:true},
+  almonds:{name:"坚果",carbs:21,protein:20,fat:54,cookedCarbs:21,cookedProtein:20,cookedFat:54,sodium:1,potassium:700,magnesium:260,unit:"g",cookingMethod:"直接食用",breakfast:true,lunch:false,dinner:false},
+  peanutButter:{name:"花生酱",carbs:20,protein:25,fat:50,cookedCarbs:20,cookedProtein:25,cookedFat:50,sodium:10,potassium:650,magnesium:170,unit:"g",cookingMethod:"涂抹",breakfast:true,lunch:false,dinner:false},
+  oliveOil:{name:"橄榄油",carbs:0,protein:0,fat:100,cookedCarbs:0,cookedProtein:0,cookedFat:100,sodium:0,potassium:0,magnesium:0,unit:"ml",unitWeight:1,cookingMethod:"烹饪用",breakfast:true,lunch:true,dinner:true},
+  broccoli:{name:"西兰花",carbs:7,protein:2.8,fat:0.4,cookedCarbs:7,cookedProtein:2.8,cookedFat:0.4,sodium:30,potassium:320,magnesium:20,unit:"g",cookingMethod:"蒸/炒",breakfast:false,lunch:true,dinner:true},
+  spinach:{name:"菠菜",carbs:3.6,protein:2.9,fat:0.4,cookedCarbs:3.6,cookedProtein:2.9,cookedFat:0.4,sodium:80,potassium:560,magnesium:80,unit:"g",cookingMethod:"炒/烫",breakfast:false,lunch:true,dinner:true},
+  bellPepper:{name:"彩椒",carbs:6,protein:0.9,fat:0.2,cookedCarbs:6,cookedProtein:0.9,cookedFat:0.2,sodium:4,potassium:210,magnesium:10,unit:"g",cookingMethod:"生食/炒",breakfast:false,lunch:true,dinner:true},
+  mushroom:{name:"蘑菇",carbs:3.3,protein:3.1,fat:0.3,cookedCarbs:3.3,cookedProtein:3.1,cookedFat:0.3,sodium:5,potassium:320,magnesium:10,unit:"g",cookingMethod:"炒/烤",breakfast:false,lunch:true,dinner:true},
+  bambooShoot:{name:"竹笋",carbs:3,protein:2.6,fat:0.2,cookedCarbs:3,cookedProtein:2.6,cookedFat:0.2,sodium:4,potassium:360,magnesium:15,unit:"g",cookingMethod:"炒/煮",breakfast:false,lunch:true,dinner:true},
+  celery:{name:"芹菜",carbs:3,protein:0.7,fat:0.2,cookedCarbs:3,cookedProtein:0.7,cookedFat:0.2,sodium:80,potassium:260,magnesium:15,unit:"g",cookingMethod:"炒/生食",breakfast:false,lunch:true,dinner:true},
+  carrot:{name:"胡萝卜",carbs:10,protein:0.9,fat:0.2,cookedCarbs:10,cookedProtein:0.9,cookedFat:0.2,sodium:70,potassium:320,magnesium:12,unit:"g",cookingMethod:"生食/煮",breakfast:false,lunch:true,dinner:true},
+  cucumber:{name:"黄瓜",carbs:3.6,protein:0.7,fat:0.1,cookedCarbs:3.6,cookedProtein:0.7,cookedFat:0.1,sodium:5,potassium:140,magnesium:10,unit:"g",cookingMethod:"生食",breakfast:false,lunch:true,dinner:true},
+  tomato:{name:"番茄",carbs:4,protein:0.9,fat:0.2,cookedCarbs:4,cookedProtein:0.9,cookedFat:0.2,sodium:5,potassium:240,magnesium:10,unit:"g",cookingMethod:"生食/炒",breakfast:false,lunch:true,dinner:true},
+  potato:{name:"土豆",carbs:17,protein:2,fat:0.1,cookedCarbs:15,cookedProtein:1.8,cookedFat:0.1,sodium:6,potassium:420,magnesium:22,unit:"g",cookingMethod:"煮/烤",breakfast:false,lunch:true,dinner:true},
+  pumpkin:{name:"南瓜",carbs:7,protein:1,fat:0.1,cookedCarbs:6,cookedProtein:0.8,cookedFat:0.1,sodium:1,potassium:340,magnesium:12,unit:"g",cookingMethod:"蒸/煮",breakfast:false,lunch:true,dinner:true},
+  banana:{name:"香蕉",carbs:23,protein:1.1,fat:0.3,cookedCarbs:23,cookedProtein:1.1,cookedFat:0.3,sodium:1,potassium:360,magnesium:27,unit:"根",unitWeight:120,cookingMethod:"直接食用",breakfast:true,lunch:false,dinner:false},
+  apple:{name:"苹果",carbs:14,protein:0.3,fat:0.2,cookedCarbs:14,cookedProtein:0.3,cookedFat:0.2,sodium:1,potassium:110,magnesium:5,unit:"个",unitWeight:200,cookingMethod:"直接食用",breakfast:true,lunch:false,dinner:false},
+  blueberry:{name:"蓝莓",carbs:14,protein:0.7,fat:0.3,cookedCarbs:14,cookedProtein:0.7,cookedFat:0.3,sodium:1,potassium:77,magnesium:6,unit:"盒",unitWeight:125,cookingMethod:"直接食用",breakfast:true,lunch:false,dinner:false}
+};
+
+const foodCategories={carbs:["oats","wholeBread","corn","rice","brownRice","sweetPotato","potato","pumpkin"],protein:["eggs","beef","chickenBreast","chickenThigh","shrimp"],fat:["almonds","peanutButter","oliveOil"],fruit:["banana","apple","blueberry"],electrolyte:["spinach","mushroom","bambooShoot","celery","carrot"],vegetable:["broccoli","bellPepper","cucumber","tomato"]};
+const categoryLabels={carbs:"🌾 碳水主食",protein:"🥩 蛋白质",fat:"🫒 脂肪来源",fruit:"🍎 健身水果",electrolyte:"⚡ 电解质蔬菜",vegetable:"🥬 其他蔬菜"};
+
+let selectedActivity="1.2",selectedFastingDays=["一","四"],selectedTraining="2-1";
+let selectedFoods={rice:true,eggs:true,chickenBreast:true,oliveOil:true,spinach:true,broccoli:true,banana:true};
+let displayMode="cooked",weekDays=[];
+
+/* 训练部位池：严格按胸→背→腿循环 */
+const bodyPartPool=["胸+三头+腹","背+二头+有氧","腿+肩"];
+const trainingPlans={"1-1":{name:"练1休1",pattern:[1,0,1,0,1,0,1]},"2-1":{name:"练2休1",pattern:[1,1,0,1,1,0,1]},"3-1":{name:"练3休1",pattern:[1,1,1,0,1,1,1]},"4-1":{name:"练4休1",pattern:[1,1,1,1,0,1,1]}};
+
+/* 计算最佳偏移量：让休息日尽量对齐断食日 */
+let trainingOffset=0;
+function findBestOffset(){
+  const fastingDayIndices=["一","二","三","四","五","六","日"].map(d=>selectedFastingDays.includes(d)?1:0);
+  const plan=trainingPlans[selectedTraining].pattern;
+  let bestOff=0,bestScore=-1;
+  for(let off=0;off<7;off++){
+    let score=0;
+    for(let d=0;d<7;d++){
+      if(plan[(d+off)%7]===0&&fastingDayIndices[d])score++;
+    }
+    if(score>bestScore){bestScore=score;bestOff=off;}
+  }
+  trainingOffset=bestOff;
+}
+
+/* 获取第idx天的训练安排（28天展开）—— 训练日按胸→背→腿顺序循环 */
+function getDaySchedule(idx){
+  const plan=trainingPlans[selectedTraining].pattern;
+  const dayOfWeek=(idx+trainingOffset)%7;
+  const isTraining=plan[dayOfWeek]===1;
+  /* 断食日强制休息 */
+  const dayName=["一","二","三","四","五","六","日"][idx%7];
+  if(selectedFastingDays.includes(dayName)){
+    return{isTraining:false,bodyPart:"休息"};
+  }
+  if(!isTraining)return{isTraining:false,bodyPart:"休息"};
+  /* 数到第几个训练日（不计断食日和休息日） */
+  let trainingCount=0;
+  for(let i=0;i<=idx;i++){
+    const dName=["一","二","三","四","五","六","日"][i%7];
+    const dow=(i+trainingOffset)%7;
+    if(selectedFastingDays.includes(dName))continue;
+    if(plan[dow]===1)trainingCount++;
+  }
+  return{isTraining:true,bodyPart:bodyPartPool[(trainingCount-1)%3]};
+}
+
+function renderTrainingCards(){
+  const c=$("training-cards");c.innerHTML="";
+  Object.entries(trainingPlans).forEach(([key,plan])=>{
+    const d=document.createElement("div");
+    d.className="bulk-level-card"+(key===selectedTraining?" selected":"");
+    d.dataset.training=key;
+    d.innerHTML=`<h4>${plan.name}</h4><p>${plan.pattern.filter(x=>x).length}练${plan.pattern.filter(x=>!x).length}休</p>`;
+    d.addEventListener("click",()=>{c.querySelectorAll(".bulk-level-card").forEach(x=>x.classList.remove("selected"));d.classList.add("selected");selectedTraining=key;calculateFivetwo()});
+    c.appendChild(d);
+  });
+  updateTrainingSchedule();
+}
+function updateTrainingSchedule(){
+  findBestOffset();
+  const dn=["周一","周二","周三","周四","周五","周六","周日"];
+  const schedule=dn.map((d,i)=>{
+    const s=getDaySchedule(i);
+    return`${d}: ${s.isTraining?"🏋️ "+s.bodyPart:"😴 休息"}`;
+  });
+  $("training-schedule").textContent="本周安排(已对齐断食日): "+schedule.join("  ");
+}
+
+const activityCards=[...document.querySelectorAll("#activity-cards .bulk-level-card")];
+function selectActivityCard(t){activityCards.forEach(c=>c.classList.remove("selected"));t.classList.add("selected");selectedActivity=t.dataset.activity;calculateFivetwo()}
+activityCards.forEach(c=>c.addEventListener("click",()=>selectActivityCard(c)));
+
+const fastingCheckboxes=document.querySelectorAll(".fasting-day-item input[type=\"checkbox\"]");
+function toggleFastingDay(day,checked){
+  if(checked){if(!selectedFastingDays.includes(day))selectedFastingDays.push(day);if(selectedFastingDays.length>2)selectedFastingDays.shift()}
+  else selectedFastingDays=selectedFastingDays.filter(d=>d!==day);
+  updateFastingLabels();calculateFivetwo();
+}
+function updateFastingLabels(){
+  fastingCheckboxes.forEach(cb=>{const day=cb.id.split("-")[1];const p=cb.nextElementSibling.querySelector("p");cb.checked=selectedFastingDays.includes(day);p.textContent=selectedFastingDays.includes(day)?"断食日":"正常日"});
+}
+fastingCheckboxes.forEach(cb=>cb.addEventListener("change",function(){toggleFastingDay(this.id.split("-")[1],this.checked)}));
+
+/* 食物选择面板 */
+function renderFoodTabs(){
+  const t=$("food-tabs");t.innerHTML="";
+  Object.keys(categoryLabels).forEach((cat,i)=>{
+    const b=document.createElement("div");b.className="food-tab"+(i===0?" active":"");b.textContent=categoryLabels[cat];b.dataset.cat=cat;
+    b.addEventListener("click",()=>{t.querySelectorAll(".food-tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderFoodGrid(cat)});
+    t.appendChild(b);
+  });
+  renderFoodGrid("carbs");
+}
+function renderFoodGrid(cat){
+  const g=$("food-grid");g.innerHTML="";
+  foodCategories[cat].forEach(key=>{
+    const f=foodDatabase[key];const sel=selectedFoods[key]||false;
+    const d=document.createElement("div");d.className="food-card"+(sel?" selected":"");
+    d.innerHTML=`<h4>${f.name}</h4><p>C:${f.carbs} P:${f.protein} F:${f.fat}/100g</p><p style="margin-top:2px">Na:${f.sodium} K:${f.potassium} Mg:${f.magnesium}</p><div style="margin-top:6px;font-size:.7rem;color:#64748b">已${sel?"选":"未"}中</div>`;
+    d.addEventListener("click",()=>{selectedFoods[key]=!selectedFoods[key];renderFoodGrid(cat);saveFoodSelection();calculateFivetwo()});
+    g.appendChild(d);
+  });
+}
+function saveFoodSelection(){localStorage.setItem("fivetwo_foods",JSON.stringify(selectedFoods))}
+function loadFoodSelection(){try{const s=localStorage.getItem("fivetwo_foods");if(s)selectedFoods=JSON.parse(s)}catch(e){}}
+
+/* 5+2 核心计算逻辑 */
+function buildMonthDays(){
+  findBestOffset();
+  const w=+$("fivetwo-weight").value||75,h=+$("fivetwo-height").value||175,a=+$("fivetwo-age").value||30,g=$("fivetwo-gender").value||"male",act=+selectedActivity||1.2;
+  const deficit=+$("fivetwo-deficit").value||200;
+  const bmr=g==="male"?10*w+6.25*h-5*a+5:10*w+6.25*h-5*a-161;
+  const tdee=Math.round(bmr*act),tgt=Math.max(tdee-deficit,bmr),fast=g==="male"?900:600;
+  $("fivetwo-bmr").textContent=Math.round(bmr);$("fivetwo-tdee").textContent=tdee;$("fivetwo-target").textContent=tgt;$("fivetwo-fasting").textContent=fast;
+
+  const dn=["一","二","三","四","五","六","日"];
+  weekDays=[];
+  for(let wk=0;wk<4;wk++){
+    dn.forEach((d,i)=>{
+      const idx=wk*7+i;
+      const isF=selectedFastingDays.includes(d);
+      const sched=getDaySchedule(idx);
+      const isT=sched.isTraining;
+      const bodyPart=sched.bodyPart;
+      let P,C,F,cal;
+      if(isF){
+        const pGoal=Math.round(w*(g==="female"?1.6:1.8));
+        const pCal=Math.min(pGoal*4,Math.round(fast*.7));
+        const rem=fast-pCal;
+        P=Math.round(pCal/4);
+        C=Math.round(rem*.7/4);
+        F=Math.round(rem*.3/9);
+        cal=fast;
+      }else{
+        const cCal=Math.round(tgt*.55);
+        const rem=tgt-cCal;
+        const pGoal=Math.round(w*1.8);
+        let pCal=pGoal*4,fCal=rem-pCal;
+        const minF=Math.round(w*.5)*9,maxF=Math.round(w*.8)*9;
+        if(fCal<minF){fCal=minF;pCal=rem-fCal}else if(fCal>maxF){fCal=maxF;pCal=rem-fCal}
+        P=Math.round(pCal/4);F=Math.round(fCal/9);C=Math.round(cCal/4);cal=tgt;
+      }
+      weekDays.push({dayNum:idx+1,name:d,week:wk,dayIndex:i,isFasting:isF,isTraining:isT,bodyPart:bodyPart,carbs:C,protein:P,fat:F,calories:cal,tdee,deficit});
+    });
+  }
+}
+
+/* 计算每日食物提供的电解质 */
+function calcDayElectrolytes(dayItems){
+  const t={sodium:0,potassium:0,magnesium:0};
+  dayItems.forEach(it=>{const f=foodDatabase[it.key];if(!f)return;const sc=it.grams/100;t.sodium+=(f.sodium||0)*sc;t.potassium+=(f.potassium||0)*sc;t.magnesium+=(f.magnesium||0)*sc});
+  return t;
+}
+
+/* 一周宏量营养表（只显示前7天） */
+function renderMacroTable(){
+  const tb=$("macro-body");tb.innerHTML="";
+  const warnings=[];
+  for(let i=0;i<7;i++){
+    const day=weekDays[i];if(!day)continue;
+    const tr=document.createElement("tr");
+    const elec=calcDayElectrolytes(getDayItems(i));
+    const mgPct=elec.magnesium/330*100;
+    if(day.isFasting&&mgPct<60){
+      warnings.push(`第${day.dayNum}天（周${day.week+1}${day.name}）: 镁摄入仅${Math.round(elec.magnesium)}mg（${Math.round(mgPct)}%），建议多吃菠菜、蘑菇、竹笋`);
+    }
+    tr.innerHTML=`<td class="day-cell ${day.isFasting?"fasting":""}"><div class="day-num">第${day.dayNum}天</div><div class="day-type">${day.isFasting?"断食日":"正常日"}</div></td><td>${day.isFasting?"🔴 断食":"🟢 正常"}</td><td>${day.carbs}</td><td>${day.protein}</td><td>${day.fat}</td><td>${day.calories}</td><td>${day.isFasting?"😴 断食休息":day.isTraining?"🏋️ "+day.bodyPart:"😴 休息"}</td>`;
+    tb.appendChild(tr);
+  }
+  const wd=$("electrolyte-warnings");
+  if(warnings.length){
+    wd.innerHTML=warnings.map(w=>`<div class="electrolyte-warning"><strong>⚠️ 断食日电解质不足提醒</strong><br>${w}</div>`).join("");
+  }else{
+    wd.innerHTML="";
+  }
+}
+
+/* 28天食谱展示 */
+function getMealName(m){return{breakfast:"早餐",lunch:"午餐",dinner:"晚餐"}[m]||m}
+
+function getDayItems(dayIdx){
+  const day=weekDays[dayIdx];if(!day)return[];
+  const items=[];
+  const selP=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.protein.includes(k)&&foodDatabase[k][day.isFasting?"breakfast":"lunch"]);
+  const selC=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.carbs.includes(k)&&foodDatabase[k].lunch);
+  const selF=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.fat.includes(k)&&(foodDatabase[k].lunch||foodDatabase[k].breakfast));
+  const selE=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.electrolyte.includes(k)&&foodDatabase[k].lunch);
+  const selV=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.vegetable.includes(k)&&foodDatabase[k].lunch);
+  const useCooked=displayMode==="cooked";
+
+  selP.forEach(key=>{const f=foodDatabase[key];if(!f)return;const pVal=useCooked?f.cookedProtein:f.protein;if(pVal===0)return;items.push({key,grams:Math.round(day.protein/(pVal/100)/Math.max(selP.length,1))})});
+  selC.forEach(key=>{const f=foodDatabase[key];if(!f)return;const cVal=useCooked?f.cookedCarbs:f.carbs;if(cVal===0)return;items.push({key,grams:Math.round(day.carbs/(cVal/100)/Math.max(selC.length,1))})});
+  selF.forEach(key=>{const f=foodDatabase[key];if(!f)return;const fVal=useCooked?f.cookedFat:f.fat;if(fVal===0)return;items.push({key,grams:Math.round(day.fat/(fVal/100)/Math.max(selF.length,1))})});
+  selE.forEach(key=>{items.push({key,grams:300})});
+  selV.forEach(key=>{items.push({key,grams:300})});
+  return items;
+}
+
+function generateMonthRecipe(){
+  const tbody=$("recipe-body");tbody.innerHTML="";
+  if(!weekDays.length)return;
+  const useCooked=displayMode==="cooked";
+  const meals=["breakfast","lunch","dinner"];
+
+  // 获取当前日期
+  const now=new Date();
+  const curMonth=now.getMonth()+1;
+  const curDate=now.getDate()+1;
+  const daysInMonth=new Date(now.getFullYear(),curMonth,0).getDate();
+
+  // 日期标签行（训练部位上方）：第一列空 + 28列空
+  const trLabel=document.createElement("tr");
+  const tdLabel=document.createElement("td");
+  tdLabel.textContent="";
+  tdLabel.style.background="#f1f5f9";
+  trLabel.appendChild(tdLabel);
+  for(let i=0;i<28;i++){
+    const td=document.createElement("td");
+    td.style.background="#f1f5f9";
+    trLabel.appendChild(td);
+  }
+  tbody.appendChild(trLabel);
+
+  // 日期行：第一列"日期" + 28天具体日期
+  const trH=document.createElement("tr");
+  const tdHLabel=document.createElement("td");
+  tdHLabel.innerHTML="<strong>日期</strong>";
+  tdHLabel.style.background="#f1f5f9";
+  tdHLabel.style.fontWeight="600";
+  trH.appendChild(tdHLabel);
+  weekDays.forEach(day=>{
+    const td=document.createElement("td");
+    const monthDay=curDate+day.dayNum-1;
+    if(monthDay>daysInMonth){
+      td.textContent=`${curMonth+1}月${monthDay-daysInMonth}日`;
+    }else{
+      td.textContent=`${curMonth}月${monthDay}日`;
+    }
+    td.style.background="#f1f5f9";
+    td.style.fontWeight="600";
+    td.style.textAlign="center";
+    if(day.isFasting)td.style.background="#fee2e2";
+    trH.appendChild(td);
+  });
+  tbody.appendChild(trH);
+
+  // 训练部位行
+  buildBodyPartRow(weekDays,tbody);
+
+  // 早餐行
+  buildMealRow("早餐","breakfast",weekDays,useCooked,tbody,meals);
+
+  // 午餐行
+  buildMealRow("午餐","lunch",weekDays,useCooked,tbody,meals);
+
+  // 晚餐行
+  buildMealRow("晚餐","dinner",weekDays,useCooked,tbody,meals);
+
+  // 当日总碳水
+  buildSummaryRow("碳水",dIdx=>{let v=0;meals.forEach(m=>{v+=getMealMacro(m,dIdx,useCooked,"c")});return v},tbody);
+
+  // 当日总蛋白
+  buildSummaryRow("蛋白",dIdx=>{let v=0;meals.forEach(m=>{v+=getMealMacro(m,dIdx,useCooked,"p")});return v},tbody);
+
+  // 当日总脂肪
+  buildSummaryRow("脂肪",dIdx=>{let v=0;meals.forEach(m=>{v+=getMealMacro(m,dIdx,useCooked,"f")});return v},tbody);
+
+  // 当日总热量
+  buildSummaryRow("热量",dIdx=>{
+    const p=getMealMacro("breakfast",dIdx,useCooked,"p")+getMealMacro("lunch",dIdx,useCooked,"p")+getMealMacro("dinner",dIdx,useCooked,"p");
+    const c=getMealMacro("breakfast",dIdx,useCooked,"c")+getMealMacro("lunch",dIdx,useCooked,"c")+getMealMacro("dinner",dIdx,useCooked,"c");
+    const f=getMealMacro("breakfast",dIdx,useCooked,"f")+getMealMacro("lunch",dIdx,useCooked,"f")+getMealMacro("dinner",dIdx,useCooked,"f");
+    return p*4+c*4+f*9;
+  },tbody);
+
+  // 热量差（实际 - 目标），带颜色
+  buildSummaryRow("热量差",dIdx=>{
+    const day=weekDays[dIdx];if(!day)return 0;
+    const p=getMealMacro("breakfast",dIdx,useCooked,"p")+getMealMacro("lunch",dIdx,useCooked,"p")+getMealMacro("dinner",dIdx,useCooked,"p");
+    const c=getMealMacro("breakfast",dIdx,useCooked,"c")+getMealMacro("lunch",dIdx,useCooked,"c")+getMealMacro("dinner",dIdx,useCooked,"c");
+    const f=getMealMacro("breakfast",dIdx,useCooked,"f")+getMealMacro("lunch",dIdx,useCooked,"f")+getMealMacro("dinner",dIdx,useCooked,"f");
+    const actual=p*4+c*4+f*9;
+    return actual-day.tdee;
+  },tbody,{colorize:true});
+
+  // 补剂行
+  buildSummaryRow("补剂",dIdx=>{
+    const day=weekDays[dIdx];if(!day)return"";
+    if(day.isFasting)return"甘氨酸镁1颗+鱼油2颗+肌酸3g+蛋白粉15g";
+    return"鱼油2颗+肌酸3g+蛋白粉15g";
+  },tbody);
+}
+
+/* 获取某餐的某项宏量值 */
+function getMealMacro(meal,dIdx,useCooked,type){
+  const day=weekDays[dIdx];if(!day)return 0;
+  let mP,mC,mF;
+  if(day.isFasting){
+    mP=meal==="breakfast"?0:Math.round(day.protein/2);
+    mC=0;mF=0;
+  }else{
+    const bfEggs=100;
+    const bfEP=(useCooked?6.5:6.5)*bfEggs/100;
+    const bfEF=(useCooked?4:5)*bfEggs/100;
+    if(meal==="breakfast"){
+      mP=0;mC=Math.round(day.carbs*.2);mF=0;
+    }else{
+      mP=Math.round((day.protein-bfEP)/2);
+      let baseC=Math.round(day.carbs*(meal==="lunch"?.4:.4));
+      const excess=(window._oatsExcessCarbs&&window._oatsExcessCarbs[dIdx])||0;
+      if(excess>0) baseC+=Math.round(excess/2);
+      mC=baseC;
+      mF=Math.round((day.fat-bfEF)/2);
+    }
+  }
+  const foods=selectFoodsForMeal(mP,mC,mF,meal,dIdx,day.isFasting);
+  let total=0;
+  foods.forEach(f=>{
+    // 水果不参与营养计算
+    if(foodCategories.fruit.includes(f.key))return;
+    const fd=foodDatabase[f.key];if(!fd)return;
+    const grams=(f.unit==="个"||f.unit==="根")?f.weight*(fd.unitWeight||50):f.weight;
+    const m=calcMacros(f.key,grams);
+    total+=type==="c"?m.c:type==="f"?m.f:m.p;
+  });
+  return Math.round(total);
+}
+
+/* 构建训练部位行 */
+function buildBodyPartRow(weekDays,tbody){
+  const tr=document.createElement("tr");
+  const tdLabel=document.createElement("td");tdLabel.innerHTML=`<strong>训练部位</strong>`;
+  tr.appendChild(tdLabel);
+  weekDays.forEach(day=>{
+    const td=document.createElement("td");
+    td.style.textAlign="center";
+    td.style.fontSize=".75rem";
+    td.textContent=day.isFasting?"😴 断食休息":day.isTraining?day.bodyPart:"😴 休息";
+    if(day.isFasting)td.style.background="#fef2f2";
+    tr.appendChild(td);
+  });
+  tbody.appendChild(tr);
+}
+
+/* 构建一餐的行 */
+function buildMealRow(label,mealKey,weekDays,useCooked,tbody){
+  const tr=document.createElement("tr");
+  const tdLabel=document.createElement("td");tdLabel.innerHTML=`<strong>${label}</strong>`;
+  tr.appendChild(tdLabel);
+  weekDays.forEach((day,dIdx)=>{
+    let mP,mC,mF;
+    if(day.isFasting){
+      mP=mealKey==="breakfast"?0:Math.round(day.protein/2);
+      mC=0;mF=0;
+    }else{
+      const bfEggs=100;
+      const bfEP=(useCooked?6.5:6.5)*bfEggs/100;
+      const bfEF=(useCooked?4:5)*bfEggs/100;
+      if(mealKey==="breakfast"){
+        mP=0;mC=Math.round(day.carbs*.2);mF=0;
+      }else{
+        mP=Math.round((day.protein-bfEP)/2);
+        let baseC=Math.round(day.carbs*(mealKey==="lunch"?.4:.4));
+        // 吸收早餐燕麦超出的碳水（午餐+晚餐平分）
+        const excess=(window._oatsExcessCarbs&&window._oatsExcessCarbs[dIdx])||0;
+        if(excess>0){
+          baseC+=Math.round(excess/2);
+        }
+        mC=baseC;
+        mF=Math.round((day.fat-bfEF)/2);
+      }
+    }
+    const foods=selectFoodsForMeal(mP,mC,mF,mealKey,dIdx,day.isFasting);
+    const td=document.createElement("td");td.style.textAlign="left";
+    const fd=document.createElement("div");fd.className="food-list";
+    const parts=[];
+    foods.forEach(f=>{
+      const w=Math.round(f.weight);
+      if(w<=0)return;
+      parts.push(`${f.name} ${w}${f.unit}`);
+    });
+    fd.textContent=parts.join(" + ");
+    td.appendChild(fd);tr.appendChild(td);
+  });
+  tbody.appendChild(tr);
+}
+
+/* 构建汇总行 */
+function buildSummaryRow(label,calcFn,tbody,opts={}){
+  const tr=document.createElement("tr");
+  const tdLabel=document.createElement("td");tdLabel.innerHTML=`<strong>${label}</strong>`;
+  tr.appendChild(tdLabel);
+  for(let dIdx=0;dIdx<28;dIdx++){
+    const td=document.createElement("td");
+    td.style.fontSize=".5rem";
+    td.style.padding="1px";
+    const val=calcFn(dIdx);
+    if(opts.colorize&&typeof val==="number"){
+      td.innerHTML=`<span class="${val<=0?"deficit-positive":"deficit-negative"}">${val>=0?"+":""}${val}</span>`;
+    }else{
+      td.textContent=val;
+    }
+    td.style.whiteSpace="normal";
+    td.style.wordWrap="break-word";
+    td.style.fontSize=".6rem";
+    td.style.padding="2px 1px";
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+}
+
+/* 从数组中按索引循环取一个 */
+function pickOne(arr,idx){return arr[idx%arr.length]}
+
+/* 根据克数计算食物的宏量贡献 */
+function calcMacros(key,grams){
+  const f=foodDatabase[key];if(!f)return{p:0,c:0,f:0};
+  const useCooked=displayMode==="cooked";
+  return{
+    p:(useCooked?f.cookedProtein:f.protein)*grams/100,
+    c:(useCooked?f.cookedCarbs:f.carbs)*grams/100,
+    f:(useCooked?f.cookedFat:f.fat)*grams/100
+  };
+}
+
+/* 将克数按单位输出 */
+function makeItem(name,grams,unit,key){
+  if(unit==="个"||unit==="根"){
+    const fd=foodDatabase[key];
+    return{name,weight:Math.max(1,Math.round(grams/(fd.unitWeight||50))),unit,key};
+  }
+  return{name,weight:Math.round(grams),unit,key};
+}
+
+/* 按5+2轻断食逻辑生成一餐的食物
+ * pT/cT/fT: 全天宏量目标（调用方传入全天值）
+ * meal: breakfast/lunch/dinner
+ * idx: 天索引（用于食物轮换）
+ * isFast: 是否断食日
+ */
+function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
+  const items=[];
+  const useCooked=displayMode==="cooked";
+
+  // === 早餐：鸡蛋 + 低蛋白碳水（断食日无碳水无脂肪） ===
+  if(meal==="breakfast"){
+    const eggCount=isFast?1:2;
+    items.push({name:"鸡蛋",weight:eggCount,unit:"个",key:"eggs"});
+
+    // 非断食日早餐碳水
+    if(!isFast){
+      const allBreakfastCarbs=Object.keys(foodDatabase).filter(k=>foodDatabase[k].breakfast&&foodCategories.carbs.includes(k));
+      const selectedBreakfastCarbs=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodDatabase[k].breakfast&&foodCategories.carbs.includes(k));
+      // 选中少于2种时，合并全部早餐碳水池保证轮换
+      const breakfastCarbs=selectedBreakfastCarbs.length>=2?selectedBreakfastCarbs:allBreakfastCarbs;
+      const lowProteinCarbs=breakfastCarbs.filter(k=>{const f=foodDatabase[k];const pVal=useCooked?f.cookedProtein:f.protein;return pVal<15});
+      const pool=lowProteinCarbs.length?lowProteinCarbs:breakfastCarbs;
+      if(pool.length){
+        const key=pickOne(pool,idx);
+        const f=foodDatabase[key];
+        const cVal=useCooked?f.cookedCarbs:f.carbs;
+        if(cVal>0){
+          const eggC=(useCooked?foodDatabase.eggs.cookedCarbs:foodDatabase.eggs.carbs)*eggCount*50/100;
+          const needC=Math.max(10,cT-eggC);
+          let grams=needC/(cVal/100);
+          // 早餐燕麦上限60g，超出碳水补到午晚餐
+          if(key==='oats'&&grams>60){
+            const actualC=Math.round(60*cVal/100);
+            const excessC=needC-actualC;
+            grams=60;
+            window._oatsExcessCarbs=(window._oatsExcessCarbs||{})[idx]!==undefined?window._oatsExcessCarbs:{};
+            window._oatsExcessCarbs[idx]=excessC;
+          } else {
+            if(!window._oatsExcessCarbs) window._oatsExcessCarbs={};
+            window._oatsExcessCarbs[idx]=0;
+          }
+          items.push(makeItem(f.name,grams,f.unit,key));
+        }
+      }
+    }
+    // 早餐水果（断食日也加，蓝莓固定1盒）
+    if(selectedFoods.blueberry){
+      items.push({name:"蓝莓",weight:1,unit:"盒",key:"blueberry"});
+    }
+    // 早餐平衡：实际碳蛋脂匹配目标
+    if(items.length){
+      let actC=0;
+      items.forEach(it=>{
+        const fd=foodDatabase[it.key];if(!fd)return;
+        const grams=(it.unit==="个"||it.unit==="根")?it.weight*(fd.unitWeight||50):it.weight;
+        const m=calcMacros(it.key,grams);
+        actC+=m.c;
+      });
+      // 碳水偏差 → 调整早餐碳水克数（鸡蛋不参与调整）
+      const carbItem=items.find(i=>i.key!=="eggs");
+      if(carbItem&&cT>0){
+        const cDiff=cT-actC;
+        const fd=foodDatabase[carbItem.key];
+        const cVal=useCooked?fd.cookedCarbs:fd.carbs;
+        if(cVal>0){
+          const oldGrams=(carbItem.unit==="个"||carbItem.unit==="根")?carbItem.weight*(fd.unitWeight||50):carbItem.weight;
+          const newGrams=Math.max(0,oldGrams+cDiff/(cVal/100));
+          const ci=items.indexOf(carbItem);
+          items[ci]=makeItem(foodDatabase[carbItem.key].name,newGrams,foodDatabase[carbItem.key].unit,carbItem.key);
+        }
+      }
+    }
+    return items;
+  }
+
+  // === 午餐/晚餐 ===
+  const meatKeys=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.protein.includes(k)&&k!=="eggs"&&foodDatabase[k].lunch);
+  const lunchCarbs=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.carbs.includes(k)&&foodDatabase[k].lunch);
+  const fatKeys=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.fat.includes(k)&&(foodDatabase[k].lunch||foodDatabase[k].breakfast));
+  const elecKeys=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.electrolyte.includes(k)&&foodDatabase[k].lunch);
+  const vegKeys=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.vegetable.includes(k)&&foodDatabase[k].lunch);
+  const coarseCarbs=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&["sweetPotato","pumpkin","brownRice"].includes(k)&&foodDatabase[k].lunch);
+  const regularCarbs=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.carbs.includes(k)&&foodDatabase[k].lunch&&!coarseCarbs.includes(k));
+
+  // 扣掉鸡蛋后，剩余蛋白质/脂肪归本餐
+  const fdE=foodDatabase.eggs;
+  const eggGrams=isFast?50:100;
+  const eggP=useCooked?fdE.cookedProtein:fdE.protein;
+  const eggF=useCooked?fdE.cookedFat:fdE.fat;
+  const eggTotalP=eggP*eggGrams/100;
+  const eggTotalF=eggF*eggGrams/100;
+  const remainP=Math.max(0,pT-eggTotalP);
+  const remainF=isFast?0:Math.max(0,fT-eggTotalF);
+  const mealP=remainP;
+  const mealF=isFast?0:remainF;
+
+  // === 午餐/晚餐：按 碳水→蛋白质→脂肪→蔬菜 顺序 ===
+
+  // 1. 主食：补足碳水到目标
+  let carbGrams=0,carbKey="";
+  if(cT>0){
+    if(isFast){
+      if(coarseCarbs.length){
+        carbKey=pickOne(coarseCarbs,idx);
+        const f=foodDatabase[carbKey];
+        const cVal=useCooked?f.cookedCarbs:f.carbs;
+        if(cVal>0){
+          carbGrams=cT/(cVal/100);
+          items.push(makeItem(f.name+"(熟)",carbGrams,f.unit,carbKey));
+        }
+      }
+    }else{
+      const carbPool=regularCarbs.length?regularCarbs:lunchCarbs;
+      if(carbPool.length){
+        carbKey=pickOne(carbPool,idx);
+        const f=foodDatabase[carbKey];
+        const cVal=useCooked?f.cookedCarbs:f.carbs;
+        if(cVal>0){
+          carbGrams=cT/(cVal/100);
+          items.push(makeItem(f.name+(useCooked?"(熟)":"(生)"),carbGrams,f.unit,carbKey));
+        }
+      }
+    }
+  }
+
+  // 2. 蔬菜：固定250g（先算但不push到最后）
+  let vegGrams=0,vegKey="";
+  if(isFast){
+    if(elecKeys.length){
+      vegKey=pickOne(elecKeys,idx);
+      vegGrams=250;
+    }
+  }else{
+    if(vegKeys.length){
+      vegKey=pickOne(vegKeys,idx);
+      vegGrams=250;
+    }
+  }
+
+  // 3. 肉类：补足蛋白质到目标（扣掉蔬菜+主食贡献）
+  const vegMacro=calcMacros(vegKey,vegGrams);
+  const carbMacro=calcMacros(carbKey,carbGrams);
+  const needP=Math.max(1,mealP-vegMacro.p-carbMacro.p);
+
+  let meatGrams=0,meatKey="";
+  if(meatKeys.length){
+    meatKey=pickOne(meatKeys,idx);
+    const f=foodDatabase[meatKey];
+    const pVal=useCooked?f.cookedProtein:f.protein;
+    if(pVal>0){
+      meatGrams=needP/(pVal/100);
+      items.push(makeItem(f.name+(useCooked?"(熟)":"(生)"),meatGrams,f.unit,meatKey));
+    }
+  }
+
+  // 4. 脂肪：非断食日补足到目标（断食日0）
+  if(!isFast&&mealF>0&&fatKeys.length){
+    const meatMacro=calcMacros(meatKey,meatGrams);
+    const needF=Math.max(1,mealF-vegMacro.f-carbMacro.f-meatMacro.f);
+    const key=pickOne(fatKeys,idx);
+    const f=foodDatabase[key];
+    const fVal=useCooked?f.cookedFat:f.fat;
+    if(fVal>0){
+      items.push(makeItem(f.name+(useCooked?"(熟)":"(生)"),needF/(fVal/100),f.unit,key));
+    }
+  }
+
+  // 5. 蔬菜（放在最后，显示顺序：碳水→蛋白质→脂肪→蔬菜）
+  if(vegKey&&vegGrams>0){
+    items.push(makeItem(foodDatabase[vegKey].name+"(熟)",vegGrams,"g",vegKey));
+  }
+
+  // 6. 平衡：根据目标碳蛋脂微调食物克数，使实际值精确匹配目标
+  if(items.length){
+    // 计算当前实际碳蛋脂
+    let actP=0,actC=0,actF=0;
+    items.forEach(it=>{
+      const fd=foodDatabase[it.key];if(!fd)return;
+      const grams=(it.unit==="个"||it.unit==="根")?it.weight*(fd.unitWeight||50):it.weight;
+      const m=calcMacros(it.key,grams);
+      actP+=m.p;actC+=m.c;actF+=m.f;
+    });
+
+    // 碳水偏差 → 调整主食克数
+    if(carbKey&&carbGrams>0){
+      const cDiff=cT-actC;
+      const fd=foodDatabase[carbKey];
+      const cVal=useCooked?fd.cookedCarbs:fd.carbs;
+      if(cVal>0){
+        carbGrams=Math.max(0,carbGrams+cDiff/(cVal/100));
+        const ci=items.findIndex(i=>i.key===carbKey);
+        if(ci!==-1)items[ci]=makeItem(foodDatabase[carbKey].name+(useCooked?"(熟)":"(生)"),carbGrams,foodDatabase[carbKey].unit,carbKey);
+        const newCarbMacro=calcMacros(carbKey,carbGrams);
+        actP=actP-carbMacro.p+newCarbMacro.p;
+        actF=actF-carbMacro.f+newCarbMacro.f;
+        actC=cT;
+      }
+    }
+
+    // 蛋白质偏差 → 调整肉类克数
+    if(meatKey&&meatGrams>0){
+      const pDiff=mealP-actP;
+      const fd=foodDatabase[meatKey];
+      const pVal=useCooked?fd.cookedProtein:fd.protein;
+      if(pVal>0){
+        meatGrams=Math.max(0,meatGrams+pDiff/(pVal/100));
+        const mi=items.findIndex(i=>i.key===meatKey);
+        if(mi!==-1)items[mi]=makeItem(foodDatabase[meatKey].name+(useCooked?"(熟)":"(生)"),meatGrams,foodDatabase[meatKey].unit,meatKey);
+        const newMeatMacro=calcMacros(meatKey,meatGrams);
+        actF+=newMeatMacro.f-calcMacros(meatKey,Math.max(0,meatGrams-pDiff/(pVal/100))).f;
+        actP=mealP;
+      }
+    }
+
+    // 脂肪偏差 → 调整油脂克数
+    if(!isFast&&fatKeys.length){
+      const fDiff=mealF-actF;
+      const fatItem=items.find(i=>foodCategories.fat.includes(i.key));
+      if(fatItem){
+        const fd=foodDatabase[fatItem.key];
+        const fVal2=useCooked?fd.cookedFat:fd.fat;
+        if(fVal2>0){
+          const fi=items.findIndex(i=>i.key===fatItem.key);
+          const oldGrams=fi!==-1?((items[fi].unit==="个"||items[fi].unit==="根")?items[fi].weight*(fd.unitWeight||50):items[fi].weight):0;
+          const newGrams=Math.max(0,oldGrams+fDiff/(fVal2/100));
+          if(fi!==-1)items[fi]=makeItem(foodDatabase[fatItem.key].name+(useCooked?"(熟)":"(生)"),newGrams,foodDatabase[fatItem.key].unit,fatItem.key);
+          actF=mealF;
+        }
+      }
+    }
+  }
+
+  // 水果：不参与营养计算，苹果→午餐，香蕉→晚餐（固定量，断食日也加）
+  if(meal==="lunch"&&selectedFoods.apple){
+    items.push({name:"苹果",weight:1,unit:"个",key:"apple"});
+  }
+  if(meal==="dinner"&&selectedFoods.banana){
+    items.push({name:"香蕉",weight:1,unit:"根",key:"banana"});
+  }
+
+  return items;
+}
+
+/* Excel 导出 */
+function downloadFivetwo(){
+  const w=+$("fivetwo-weight").value||75,h=+$("fivetwo-height").value||175,a=+$("fivetwo-age").value||30,g=$("fivetwo-gender").value||"male";
+  const bmr=+$("fivetwo-bmr").textContent,tdee=+$("fivetwo-tdee").textContent,tgt=+$("fivetwo-target").textContent,fast=+$("fivetwo-fasting").textContent;
+  const basic=[["5+2轻断食月度计划"],["当前体重(kg)",w],["身高(cm)",h],["年龄(岁)",a],["性别",g==="male"?"男":"女"],["断食日",selectedFastingDays.join("、")],["训练计划",trainingPlans[selectedTraining].name],[],["计算结果"],["基础代谢(BMR)",bmr],["每日总消耗(TDEE)",tdee],["非断食日热量",tgt],["断食日热量",fast],[],["28天明细"]];
+  const plan=[["天数","周次","类型","碳水(g)","蛋白质(g)","脂肪(g)","总热量(kcal)","训练部位"]];
+  weekDays.forEach((day,i)=>{plan.push([`第${day.dayNum}天`,`第${day.week+1}周`,day.isFasting?"断食日":"正常日",day.carbs,day.protein,day.fat,day.calories,day.isFasting?"断食休息":day.bodyPart])});
+  const ws=XLSX.utils.aoa_to_sheet([...basic,...plan]),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"5+2月度计划");XLSX.writeFile(wb,`5+2轻断食月度计划_${w}kg.xlsx`);
+}
+
+function downloadRecipeExcel(){
+  const useCooked=displayMode==="cooked";
+  const data=[[`5+2轻断食食谱 - 28天完整展示`],[]];
+  const meals=["breakfast","lunch","dinner"];
+  weekDays.forEach((day,dIdx)=>{
+    data.push([`第${day.dayNum}天 (${day.isFasting?"断食日":"正常日"})`]);
+    data.push(["训练部位",day.isFasting?"断食休息":day.bodyPart,"",""]);
+    data.push(["餐次","食物","重量","单位"]);
+    meals.forEach(meal=>{
+      let mP,mC,mF;
+      if(day.isFasting){
+        mP=meal==="breakfast"?0:Math.round(day.protein/2);
+        mC=0;
+        mF=0;
+      }else{
+        const bfEggs=100;
+        const bfEP=(useCooked?6.5:6.5)*bfEggs/100;
+        const bfEF=(useCooked?4:5)*bfEggs/100;
+        if(meal==="breakfast"){
+          mP=0;
+          mC=Math.round(day.carbs*.2);
+          mF=0;
+        }else{
+          mP=Math.round((day.protein-bfEP)/2);
+          let baseC=Math.round(day.carbs*(meal==="lunch"?.4:.4));
+          const excess=(window._oatsExcessCarbs&&window._oatsExcessCarbs[dIdx])||0;
+          if(excess>0) baseC+=Math.round(excess/2);
+          mC=baseC;
+          mF=Math.round((day.fat-bfEF)/2);
+        }
+      }
+      const foods=selectFoodsForMeal(mP,mC,mF,meal,dIdx,day.isFasting);
+      data.push([getMealName(meal),"","",""]);
+      foods.forEach(f=>{
+        data.push(["",f.name,Math.round(f.weight),f.unit]);
+      });
+    });
+    data.push([]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"28天食谱");XLSX.writeFile(wb,"5+2轻断食_28天食谱.xlsx");
+}
+
+function resetFivetwo(){
+  $("fivetwo-weight").value=75;$("fivetwo-height").value=175;$("fivetwo-age").value=30;$("fivetwo-gender").value="male";$("fivetwo-deficit").value=200;
+  selectedActivity="1.2";selectedTraining="2-1";selectedFastingDays=["一","四"];selectedFoods={rice:true,eggs:true,chickenBreast:true,oliveOil:true,spinach:true,broccoli:true,banana:true};
+  localStorage.removeItem("fivetwo_foods");
+  activityCards.forEach(c=>c.classList.remove("selected"));activityCards[0].classList.add("selected");
+  updateFastingLabels();renderTrainingCards();renderFoodTabs();calculateFivetwo();
+}
+
+function calculateFivetwo(){window._oatsExcessCarbs={};buildMonthDays();renderMacroTable();generateMonthRecipe()}
+
+/* 体重切换 */
+document.querySelectorAll(".weight-toggle-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".weight-toggle-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    displayMode=btn.dataset.mode;
+    generateMonthRecipe();
+  });
+});
+
+/* 初始化 */
+window.onload=function(){loadFoodSelection();renderTrainingCards();renderFoodTabs();calculateFivetwo()};
+$("fivetwo-calc").addEventListener("click",calculateFivetwo);
+$("fivetwo-reset").addEventListener("click",resetFivetwo);
+$("fivetwo-dl").addEventListener("click",downloadFivetwo);
+$("fivetwo-recipe-dl").addEventListener("click",downloadRecipeExcel);
+$("fivetwo-deficit").addEventListener("change",calculateFivetwo);
+</script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿亮健身 - 营养工具整合平台</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0f7ff, #ffffff);
+            min-height: 100vh;
+            color: #334155;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 工具页面样式 */
+        .tool-page {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        :root{
+          --primary:#0ea5e9;
+          --primary-light:#38bdf8;
+          --success:#10b981;
+          --warning:#f59e0b;
+          --danger:#f43f5e;
+          --dark:#1e293b;
+          --light:#f8fafc;
+          --high:#bae6fd;
+          --med:#e0f2fe;
+          --low:#fef3c7;
+        }
+        
+        header{
+            color:#0ea5e9;
+            text-align:center;
+            margin-bottom:24px;
+            position:relative;
+        }
+        
+        header h1{
+            font-size:1.8rem;
+            margin-bottom:4px;
+            font-weight:700
+        }
+        
+        header .subtitle{
+            font-size:.9rem;
+            color:#64748b
+        }
+        
+        /* 标签页样式 */
+        .tab-container {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+        
+        .tab-button:hover {
+            background: #e0f2fe;
+            color: #0ea5e9;
+        }
+        
+        .tab-button.active {
+            background: #0ea5e9;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            min-height: 600px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* iframe样式 */
+        .tool-iframe {
+            width: 100%;
+            height: calc(100vh - 200px);
+            border: none;
+            border-radius: 8px;
+            min-height: 800px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .tab-container {
+                flex-wrap: wrap;
+            }
+            
+            .tab-button {
+                flex: 1 1 calc(33.333% - 4px);
+                text-align: center;
+                font-size: 0.8rem;
+                padding: 10px;
+            }
+            
+            .tool-page {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container tool-page">
+        <!-- 标签页容器 -->
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="fivetwo">5+2轻断食</button>
+            <button class="tab-button" data-tab="carbon">碳循环食谱</button>
+            <button class="tab-button" data-tab="carb-decline">碳水渐降</button>
+            <button class="tab-button" data-tab="bulk">增肌食谱</button>
+        </div>
+
+        <!-- 标签页内容 -->
+        <div id="fivetwo-tab" class="tab-content active">
+            <iframe class="tool-iframe" src="5+2轻断食.html"></iframe>
+        </div>
+        
+        <div id="carbon-tab" class="tab-content">
+            <iframe class="tool-iframe" src="碳循环一月食谱(1).html"></iframe>
+        </div>
+
+        <div id="carb-decline-tab" class="tab-content">
+            <iframe class="tool-iframe" src="532碳水渐减食谱.html"></iframe>
+        </div>
+
+        <div id="bulk-tab" class="tab-content">
+            <iframe class="tool-iframe" src="增肌食谱(1).html"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // 标签页切换功能
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // 移除所有标签页的活动状态
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // 添加当前标签页的活动状态
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>阿亮健身 - 532碳水渐减减脂食谱</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --primary:#2ea44f;--success:#10b981;--warning:#f59e0b;--danger:#e74c3c;--dark:#2c3e50;--light:#f4f6f8;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+body{background:linear-gradient(135deg,#134e5e,#71b280);color:#333;padding:12px;min-height:100vh}
+.container{max-width:1600px;margin:0 auto}
+header{color:#fff;text-align:center;margin-bottom:20px}
+header h3{font-size:1.6rem;margin-bottom:6px}
+header .subtitle{font-size:.9rem;opacity:.9}
+
+.top-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.top-row>section{background:#fff;border-radius:8px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,.15);flex:1 1 260px;min-width:260px}
+.top-row h3{font-size:1rem;margin-bottom:8px;border-bottom:2px solid var(--primary);padding-bottom:4px}
+.basic-row{display:flex;gap:8px;flex-wrap:wrap}
+.basic-row .input-group{flex:1 1 100px;display:flex;flex-direction:column}
+.top-row label{font-size:.8rem;font-weight:600;margin-bottom:4px}
+.top-row input,.top-row select{padding:6px 8px;font-size:.8rem;border:1px solid #ccc;border-radius:4px}
+
+.summary-cards{display:flex;gap:8px;flex-wrap:wrap}
+.summary-card{flex:1 1 70px;background:#fff;border-radius:6px;padding:8px;text-align:center;font-size:.75rem}
+.summary-card .val{font-size:1rem;font-weight:700;color:var(--primary)}
+.summary-card .lab{font-size:.6rem;color:#666}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.btn-row button{flex:1 1 80px;padding:8px 0;border:none;border-radius:4px;font-size:.8rem;font-weight:600;cursor:pointer;color:#fff}
+.btn-calc{background:var(--primary)}
+.btn-down{background:var(--success)}
+.btn-reset{background:var(--warning)}
+
+.table-wrap{overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:.75rem}
+th,td{border:1px solid #dee2e6;padding:6px 4px;text-align:center;color:#333}
+th{background:#4a5568;color:#fff}
+
+.food-selection-section{margin-top:8px}
+.food-category-tabs{display:flex;gap:4px;margin-bottom:12px}
+.food-category-tab{padding:10px 20px;background:var(--light);border:2px solid #e0e0e0;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;transition:.2s}
+.food-category-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.food-category-tab:hover{border-color:var(--primary)}
+.food-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;max-height:300px;overflow-y:auto;padding:8px;border:1px solid #eee;border-radius:6px;background:#fafafa}
+.food-card{border:2px solid #e0e0e0;border-radius:8px;padding:10px 12px;cursor:pointer;transition:.2s;background:#fff;font-size:.8rem;position:relative}
+.food-card.selected{border-color:var(--primary);background:#e5f8ed;box-shadow:0 2px 8px rgba(46,164,79,.2)}
+.food-card:hover{border-color:var(--primary);transform:translateY(-1px)}
+.food-card .food-name{font-weight:700;margin-bottom:4px;font-size:.85rem}
+.food-card .food-macros{color:#666;line-height:1.4}
+.food-card .food-macros span{margin-right:6px;font-size:.75rem}
+.food-card .check-mark{position:absolute;top:6px;right:8px;color:var(--primary);font-weight:bold;font-size:1rem;display:none}
+.food-card.selected .check-mark{display:block}
+.food-selection-summary{margin-top:12px;font-size:.85rem;color:#666;display:flex;gap:16px;flex-wrap:wrap}
+.food-selection-summary .cat-count{background:var(--light);padding:4px 12px;border-radius:16px;font-weight:600}
+.food-selection-summary .cat-count.warn{background:#fff3cd;color:#856404;border:1px solid #ffc107}
+.food-warning{color:#e74c3c;font-size:.8rem;margin-top:8px;padding:6px 12px;background:#fff5f5;border-radius:4px;display:none}
+.food-warning.show{display:block}
+.food-actions{display:flex;gap:8px;margin-top:12px}
+.food-actions button{padding:8px 20px;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;background:var(--warning);color:#fff}
+
+.tab-container{display:flex;gap:2px;margin-bottom:10px}
+.tab-button{padding:8px 16px;background:var(--light);border:none;border-radius:4px 4px 0 0;cursor:pointer;font-size:.8rem;font-weight:600;transition:background .2s}
+.tab-button.active{background:var(--primary);color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.notes{background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.15);padding:16px 20px;margin-top:20px;font-size:.8rem;line-height:1.6}
+.notes h3{margin-bottom:10px;color:var(--dark);font-size:1rem}
+.notes ul{margin:0;padding-left:20px}
+.notes li{margin-bottom:6px}
+footer{color:#fff;text-align:center;font-size:.6rem;margin-top:20px;opacity:.7}
+
+.summary-row{background:#fff3cd!important;font-weight:bold;color:#333!important}
+.summary-row td{background:#fff3cd!important;color:#333!important;font-weight:bold}
+.week1-header{background:#2d6a4f!important;color:#fff!important}
+.week2-header{background:#1e3a8a!important;color:#fff!important}
+.week3-header{background:#78716c!important;color:#fff!important}
+.week4-header{background:#991b1b!important;color:#fff!important}
+.bulk-level-card.selected{border-color:var(--primary)!important;background:#e5f8ed!important}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h3>阿亮健身 - 532碳水渐减减脂食谱</h3>
+    <p class="subtitle">50%碳水 30%蛋白 20%脂肪 | 逐周渐降碳水，科学减脂</p>
+  </header>
+
+  <div class="top-row">
+    <section>
+      <h3>第一步：输入基础信息</h3>
+      <div class="basic-row">
+        <div class="input-group"><label>当前体重(kg)</label><input type="number" id="weight" value="75" min="40" max="200"></div>
+        <div class="input-group"><label>身高(cm)</label><input type="number" id="height" value="175" min="140" max="220"></div>
+        <div class="input-group"><label>年龄(岁)</label><input type="number" id="age" value="30" min="18" max="80"></div>
+        <div class="input-group"><label>性别</label>
+          <select id="gender"><option value="male">男</option><option value="female">女</option></select>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>第二步：日常活动水平</h3>
+      <div id="activityCards" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="bulk-level-card selected" data-activity="1.2" style="flex:1 1 120px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.8rem;margin-bottom:4px">久坐</h4><p style="font-size:.65rem;margin:0;color:#666">办公室/几乎无运动</p></div>
+        <div class="bulk-level-card" data-activity="1.375" style="flex:1 1 120px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.8rem;margin-bottom:4px">轻度活跃</h4><p style="font-size:.65rem;margin:0;color:#666">每周运动1-3天</p></div>
+        <div class="bulk-level-card" data-activity="1.55" style="flex:1 1 120px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.8rem;margin-bottom:4px">中度活跃</h4><p style="font-size:.65rem;margin:0;color:#666">每周运动3-5天</p></div>
+        <div class="bulk-level-card" data-activity="1.725" style="flex:1 1 120px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.8rem;margin-bottom:4px">高度活跃</h4><p style="font-size:.65rem;margin:0;color:#666">每周运动6-7天</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h3>第三步：第一周热量亏空</h3>
+      <div class="basic-row">
+        <div class="input-group"><label>热量亏空(kcal)</label><input type="number" id="deficitInput" value="200" step="50" min="200" max="1000"></div>
+      </div>
+    </section>
+
+    <section>
+      <h3>第四步：训练频率</h3>
+      <div id="freqCards" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="bulk-level-card" data-freq="none" style="flex:1 1 90px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.85rem;margin-bottom:4px">不训练</h4><p style="font-size:.65rem;margin:0;color:#666">纯减脂</p></div>
+        <div class="bulk-level-card" data-freq="1-1" style="flex:1 1 90px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.85rem;margin-bottom:4px">练1休1</h4><p style="font-size:.65rem;margin:0;color:#666">隔天练</p></div>
+        <div class="bulk-level-card" data-freq="2-1" style="flex:1 1 90px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#fff"><h4 style="font-size:.85rem;margin-bottom:4px">练2休1</h4><p style="font-size:.65rem;margin:0;color:#666">高频</p></div>
+        <div class="bulk-level-card selected" data-freq="3-1" style="flex:1 1 90px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:#e5f8ed;border-color:var(--primary)"><h4 style="font-size:.85rem;margin-bottom:4px">练3休1</h4><p style="font-size:.65rem;margin:0;color:#666">均衡</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h3>第五步：训练计划</h3>
+      <div id="trainingCards" style="display:flex;gap:8px;flex-wrap:wrap">
+        <!-- 由频率决定显示哪些训练计划 -->
+      </div>
+      <div id="trainingScheduleInfo" style="font-size:.75rem;color:#666;margin-top:8px"></div>
+    </section>
+
+    <section>
+      <h3>您的计划</h3>
+      <div class="summary-cards">
+        <div class="summary-card"><span class="val" id="bmrValue">-</span><div class="lab">基础代谢</div></div>
+        <div class="summary-card"><span class="val" id="tdeeValue">-</span><div class="lab">每日总消耗</div></div>
+        <div class="summary-card"><span class="val" id="targetCalValue">-</span><div class="lab">目标摄入</div></div>
+        <div class="summary-card"><span class="val" id="carbsValue">-</span><div class="lab">每日碳水(g)</div></div>
+        <div class="summary-card"><span class="val" id="proteinValue">-</span><div class="lab">每日蛋白(g)</div></div>
+        <div class="summary-card"><span class="val" id="fatValue">-</span><div class="lab">每日脂肪(g)</div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 食物选择面板 -->
+  <section style="background:#fff;border-radius:8px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,.15);margin-bottom:16px">
+    <h3 style="font-size:1rem;margin-bottom:8px;border-bottom:2px solid var(--primary);padding-bottom:4px">食物选择（按类别勾选你常吃的食材）</h3>
+    <p style="font-size:.8rem;color:#666;margin-bottom:10px">碳水/蛋白/脂肪每类至少选1种。果蔬不计入营养素，水果只出现在早餐，蔬菜出现在午晚餐。</p>
+    <div class="food-selection-section">
+      <div class="food-category-tabs">
+        <button class="food-category-tab active" data-food-cat="carb">碳水来源</button>
+        <button class="food-category-tab" data-food-cat="protein">蛋白质来源</button>
+        <button class="food-category-tab" data-food-cat="fat">脂肪来源</button>
+        <button class="food-category-tab" data-food-cat="fruit">水果</button>
+        <button class="food-category-tab" data-food-cat="vegetable">蔬菜</button>
+      </div>
+      <div id="foodGrid-carb" class="food-grid"></div>
+      <div id="foodGrid-protein" class="food-grid" style="display:none"></div>
+      <div id="foodGrid-fat" class="food-grid" style="display:none"></div>
+      <div id="foodGrid-fruit" class="food-grid" style="display:none"></div>
+      <div id="foodGrid-vegetable" class="food-grid" style="display:none"></div>
+      <div class="food-selection-summary">
+        <span class="cat-count" id="count-carb">碳水: 0种</span>
+        <span class="cat-count" id="count-protein">蛋白: 0种</span>
+        <span class="cat-count" id="count-fat">脂肪: 0种</span>
+        <span class="cat-count" id="count-fruit">水果: 0种</span>
+        <span class="cat-count" id="count-vegetable">蔬菜: 0种</span>
+      </div>
+      <div class="food-warning" id="foodWarning">&#x26a0; 每类至少选择1种食物，否则无法生成食谱</div>
+      <div class="food-actions">
+        <button id="foodResetBtn">恢复默认食物</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="btn-row">
+    <button class="btn-calc" id="calculateBtn">计算计划</button>
+    <button class="btn-down" id="downloadBtn">下载Excel(PC端)</button>
+    <button class="btn-down" id="recipeDlBtn">下载食谱Excel</button>
+    <button class="btn-reset" id="resetBtn">重置</button>
+  </div>
+
+  <!-- Tab切换 -->
+  <div class="tab-container">
+    <button class="tab-button active" data-tab="raw">生重食谱</button>
+    <button class="tab-button" data-tab="cooked">熟重食谱</button>
+  </div>
+
+  <!-- 生重食谱 -->
+  <div id="rawTab" class="tab-content active">
+    <div class="table-wrap">
+      <table id="recipeTable">
+        <thead>
+          <tr>
+            <th rowspan="3">餐次/项目</th>
+            <th colspan="7" class="week1-header">第一周（初始碳水）</th>
+            <th colspan="7" class="week2-header">第二周（碳水-15g）</th>
+            <th colspan="7" class="week3-header">第三周（碳水-30g）</th>
+            <th colspan="7" class="week4-header">第四周（碳水-45g）</th>
+          </tr>
+          <tr></tr>
+        </thead>
+        <tbody id="recipeBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 熟重食谱 -->
+  <div id="cookedTab" class="tab-content">
+    <div class="table-wrap">
+      <table id="cookedRecipeTable">
+        <thead>
+          <tr>
+            <th rowspan="2">餐次/项目</th>
+            <th colspan="7" class="week1-header">第一周（初始碳水）</th>
+            <th colspan="7" class="week2-header">第二周（碳水-15g）</th>
+            <th colspan="7" class="week3-header">第三周（碳水-30g）</th>
+            <th colspan="7" class="week4-header">第四周（碳水-45g）</th>
+          </tr>
+          <tr></tr>
+        </thead>
+        <tbody id="cookedRecipeBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>&#x1f4cc; 532碳水渐减法说明</h3>
+    <ul>
+      <li><strong>532比例：</strong>目标摄入热量中碳水50%、蛋白质30%、脂肪20%</li>
+      <li><strong>热量亏空：</strong>第一周亏空为设定值，此后每周因碳水递减，实际亏空逐周递增</li>
+      <li><strong>训练频率：</strong>练3休1（推/拉/腿、上/下肢、五分化）/ 练2休1（推/拉/腿、上/下肢、全身）/ 练1休1（推/拉/腿、上/下肢、全身）</li>
+      <li><strong>训练日碳水分配：</strong>早餐25% / 午餐30% / 练后晚餐45%，集中碳水补充训练消耗</li>
+      <li><strong>休息日碳水分配：</strong>早餐30% / 午餐35% / 晚餐35%，均匀分配</li>
+      <li><strong>早餐高碳：</strong>启动一天代谢</li>
+      <li><strong>午餐中碳：</strong>补充训练能量</li>
+      <li><strong>晚餐低碳：</strong>夜间燃脂优先（休息日），训练日练后餐增加碳水</li>
+      <li><strong>加餐固定：</strong>1份低GI水果（橙子/苹果），不增加精制碳水</li>
+      <li><strong>逐周渐降：</strong>每周减少15g碳水，最低不低于100g/天</li>
+      <li><strong>蛋白质/脂肪固定：</strong>每日不变，保证不掉肌肉</li>
+      <li><strong>早餐脂肪：</strong>坚果、牛油果等（烹饪用油只在午晚餐）</li>
+      <li><strong>烹饪方式：</strong>蒸、煮、烤、凉拌、少油快炒，拒绝油炸重油重盐</li>
+      <li><strong>早餐专属：</strong>燕麦、玉米、全麦面包等只出现在早餐，午晚餐使用米饭/红薯等主食</li>
+      <li><strong>训练日 vs 休息日：</strong>训练日练后餐（晚餐）增加碳水至45%，休息日均匀分配。排程信息在页面实时更新</li>
+    </ul>
+  </div>
+  <footer>阿亮健身 &middot; 532碳水渐减减脂食谱 &copy; 2026</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ========== 食物数据库 ========== */
+const foodDatabase = {
+  rice:       { name:"白米饭", cookedName:"白米饭(熟)", carbs:77, protein:7.2, fat:0, cookedCarbs:28, cookedProtein:2.6, cookedFat:0, category:"carb", unit:"g", cookingMethod:"煮", breakfast:false },
+  brownRice:  { name:"糙米", cookedName:"糙米(熟)", carbs:72, protein:8, fat:2, cookedCarbs:26, cookedProtein:3, cookedFat:1, category:"carb", unit:"g", cookingMethod:"煮", breakfast:false },
+  sweetPotato:{ name:"红薯", cookedName:"熟红薯", carbs:20, protein:1.6, fat:0, cookedCarbs:20, cookedProtein:1.6, cookedFat:0, category:"carb", unit:"g", cookingMethod:"蒸/烤", breakfast:false },
+  quinoa:     { name:"藜麦", cookedName:"熟藜麦", carbs:64, protein:14, fat:6, cookedCarbs:21, cookedProtein:4.5, cookedFat:2, category:"carb", unit:"g", cookingMethod:"煮", breakfast:false },
+  buckwheat:  { name:"荞麦面", cookedName:"熟荞麦面", carbs:71, protein:11, fat:2, cookedCarbs:23, cookedProtein:3.5, cookedFat:0.6, category:"carb", unit:"g", cookingMethod:"煮", breakfast:false },
+  potato:     { name:"土豆", cookedName:"熟土豆", carbs:17, protein:2, fat:0, cookedCarbs:15, cookedProtein:1.8, cookedFat:0, category:"carb", unit:"g", cookingMethod:"煮/烤", breakfast:false },
+  pumpkin:    { name:"南瓜", cookedName:"熟南瓜", carbs:7, protein:1, fat:0.1, cookedCarbs:6, cookedProtein:0.8, cookedFat:0, category:"carb", unit:"g", cookingMethod:"蒸", breakfast:false },
+  oats:       { name:"燕麦", cookedName:"燕麦", carbs:60, protein:13, fat:7, cookedCarbs:60, cookedProtein:13, cookedFat:7, category:"carb", unit:"g", cookingMethod:"煮", breakfast:true },
+  corn:       { name:"甜玉米", cookedName:"熟玉米", carbs:18, protein:3, fat:0.8, cookedCarbs:18, cookedProtein:3, cookedFat:0.8, category:"carb", unit:"根", unitWeight:250, cookingMethod:"煮", breakfast:true },
+  wholeWheatBread:{ name:"全麦面包", cookedName:"全麦面包", carbs:43, protein:11, fat:3, cookedCarbs:43, cookedProtein:11, cookedFat:3, category:"carb", unit:"片", unitWeight:35, cookingMethod:"直接食用", breakfast:true },
+
+  eggs:       { name:"鸡蛋", cookedName:"水煮蛋", carbs:1, protein:13, fat:10, cookedCarbs:1, cookedProtein:13, cookedFat:10, category:"protein", unit:"个", unitWeight:50, cookingMethod:"煮", breakfast:true },
+  chickenBreast:{ name:"鸡胸肉", cookedName:"熟鸡胸", carbs:0, protein:23, fat:2.5, cookedCarbs:0, cookedProtein:32, cookedFat:3, category:"protein", unit:"g", cookingMethod:"煮/蒸", breakfast:false },
+  beef:       { name:"瘦牛肉", cookedName:"熟牛肉", carbs:0, protein:22, fat:5, cookedCarbs:0, cookedProtein:33, cookedFat:10, category:"protein", unit:"g", cookingMethod:"煮/炒", breakfast:false },
+  shrimp:     { name:"虾", cookedName:"熟虾", carbs:0, protein:14.5, fat:0.6, cookedCarbs:0, cookedProtein:18, cookedFat:0.7, category:"protein", unit:"g", cookingMethod:"煮/炒", breakfast:false },
+  salmon:     { name:"三文鱼", cookedName:"熟三文鱼", carbs:0, protein:20, fat:12, cookedCarbs:0, cookedProtein:28, cookedFat:16, category:"protein", unit:"g", cookingMethod:"煎/烤", breakfast:false },
+  turkey:     { name:"火鸡肉", cookedName:"熟火鸡", carbs:0, protein:24, fat:2, cookedCarbs:0, cookedProtein:33, cookedFat:3, category:"protein", unit:"g", cookingMethod:"煮/烤", breakfast:false },
+  porkTenderloin:{ name:"猪里脊", cookedName:"熟猪里脊", carbs:0, protein:21, fat:5, cookedCarbs:0, cookedProtein:30, cookedFat:7, category:"protein", unit:"g", cookingMethod:"煮/炒", breakfast:false },
+  tofu:       { name:"北豆腐", cookedName:"北豆腐", carbs:2, protein:12, fat:6, cookedCarbs:2, cookedProtein:12, cookedFat:6, category:"protein", unit:"g", cookingMethod:"煮/煎", breakfast:false },
+
+  oliveOil:   { name:"橄榄油", cookedName:"橄榄油", carbs:0, protein:0, fat:100, cookedCarbs:0, cookedProtein:0, cookedFat:100, category:"fat", unit:"ml", unitWeight:1, cookingMethod:"烹饪用", breakfast:false },
+  almonds:    { name:"坚果", cookedName:"坚果", carbs:21, protein:20, fat:54, cookedCarbs:21, cookedProtein:20, cookedFat:54, category:"fat", unit:"g", cookingMethod:"直接食用", breakfast:false },
+  avocado:    { name:"牛油果", cookedName:"牛油果", carbs:9, protein:2, fat:15, cookedCarbs:9, cookedProtein:2, cookedFat:15, category:"fat", unit:"个", unitWeight:150, cookingMethod:"直接食用", breakfast:false },
+  coconutOil: { name:"椰子油", cookedName:"椰子油", carbs:0, protein:0, fat:100, cookedCarbs:0, cookedProtein:0, cookedFat:100, category:"fat", unit:"ml", unitWeight:1, cookingMethod:"烹饪用", breakfast:false },
+
+  broccoli:   { name:"西兰花", cookedName:"熟西兰花", category:"vegetable", unit:"g", cookingWeight:130, cookingMethod:"蒸/炒", breakfast:false },
+  spinach:    { name:"菠菜", cookedName:"熟菠菜", category:"vegetable", unit:"g", cookingWeight:180, cookingMethod:"炒/烫", breakfast:false },
+  bellPepper: { name:"彩椒", cookedName:"熟彩椒", category:"vegetable", unit:"g", cookingWeight:120, cookingMethod:"生食/炒", breakfast:false },
+  mushroom:   { name:"蘑菇", cookedName:"熟蘑菇", category:"vegetable", unit:"g", cookingWeight:160, cookingMethod:"炒/烤", breakfast:false },
+  cucumber:   { name:"黄瓜", cookedName:"黄瓜", category:"vegetable", unit:"g", cookingWeight:100, cookingMethod:"生食", breakfast:false },
+  tomato:     { name:"番茄", cookedName:"番茄", category:"vegetable", unit:"g", cookingWeight:110, cookingMethod:"生食/炒", breakfast:false },
+  lettuce:    { name:"生菜", cookedName:"生菜", category:"vegetable", unit:"g", cookingWeight:150, cookingMethod:"生食/烫", breakfast:false },
+  cabbage:    { name:"卷心菜", cookedName:"熟卷心菜", category:"vegetable", unit:"g", cookingWeight:140, cookingMethod:"炒/烫", breakfast:false },
+  celery:     { name:"芹菜", cookedName:"熟芹菜", category:"vegetable", unit:"g", cookingWeight:130, cookingMethod:"炒/凉拌", breakfast:false },
+  asparagus:  { name:"芦笋", cookedName:"熟芦笋", category:"vegetable", unit:"g", cookingWeight:140, cookingMethod:"蒸/烤", breakfast:false },
+  bokChoy:    { name:"小白菜", cookedName:"熟小白菜", category:"vegetable", unit:"g", cookingWeight:150, cookingMethod:"炒/烫", breakfast:false },
+  zucchini:   { name:"西葫芦", cookedName:"熟西葫芦", category:"vegetable", unit:"g", cookingWeight:130, cookingMethod:"炒/烤", breakfast:false },
+  greenBean:  { name:"四季豆", cookedName:"熟四季豆", category:"vegetable", unit:"g", cookingWeight:130, cookingMethod:"炒/煮", breakfast:false },
+  cauliflower:{ name:"花菜", cookedName:"熟花菜", category:"vegetable", unit:"g", cookingWeight:140, cookingMethod:"炒/烤", breakfast:false },
+  winterMelon:{ name:"冬瓜", cookedName:"熟冬瓜", category:"vegetable", unit:"g", cookingWeight:180, cookingMethod:"煮/炒", breakfast:false },
+  bambooShoot:{ name:"竹笋", cookedName:"熟竹笋", category:"vegetable", unit:"g", cookingWeight:140, cookingMethod:"炒/煮", breakfast:false },
+
+  apple:      { name:"苹果", cookedName:"苹果", category:"fruit", unit:"个", unitWeight:200, cookingMethod:"直接食用", breakfast:true },
+  orange:     { name:"橙子", cookedName:"橙子", category:"fruit", unit:"个", unitWeight:150, cookingMethod:"直接食用", breakfast:true },
+  blueberry:  { name:"蓝莓", cookedName:"蓝莓", category:"fruit", unit:"g", unitWeight:1, cookingWeight:50, cookingMethod:"直接食用", breakfast:true },
+  banana:     { name:"香蕉", cookedName:"香蕉", category:"fruit", unit:"根", unitWeight:120, cookingMethod:"直接食用", breakfast:true },
+  kiwi:       { name:"猕猴桃", cookedName:"猕猴桃", category:"fruit", unit:"个", unitWeight:80, cookingMethod:"直接食用", breakfast:true },
+  grapefruit: { name:"葡萄柚", cookedName:"葡萄柚", category:"fruit", unit:"个", unitWeight:250, cookingMethod:"直接食用", breakfast:true },
+  strawberry: { name:"草莓", cookedName:"草莓", category:"fruit", unit:"g", unitWeight:1, cookingMethod:"直接食用", breakfast:true },
+  cherry:     { name:"樱桃", cookedName:"樱桃", category:"fruit", unit:"g", unitWeight:1, cookingMethod:"直接食用", breakfast:true },
+};
+
+const defaultSelected = {
+  carb: ["rice", "sweetPotato", "oats", "corn"],
+  protein: ["eggs", "chickenBreast", "beef", "tofu"],
+  fat: ["oliveOil", "almonds"],
+  fruit: ["apple", "banana", "orange"],
+  vegetable: ["broccoli", "cucumber", "spinach"]
+};
+
+let selectedFoods = JSON.parse(JSON.stringify(defaultSelected));
+let displayMode = "raw";
+let weekDays = [];
+
+/* ========== 活动水平 ========== */
+const activityCards = [...document.querySelectorAll('#activityCards .bulk-level-card')];
+let selectedActivity = "1.2";
+
+function selectActivityCard(card) {
+  activityCards.forEach(c => { c.classList.remove('selected'); c.style.borderColor = '#ccc'; c.style.background = '#fff'; });
+  card.classList.add('selected');
+  card.style.borderColor = 'var(--primary)';
+  card.style.background = '#e5f8ed';
+  selectedActivity = card.dataset.activity;
+  calculate();
+}
+activityCards.forEach(c => c.addEventListener('click', () => selectActivityCard(c)));
+
+/* ========== 训练频率 + 训练计划 ========== */
+
+// 训练部位标签
+const trainingLabels = {
+  push: "推(胸+三头)", pull: "拉(背+二头+有氧)", legs: "腿+肩", rest: "休息",
+  upper: "上肢", lower: "下肢",
+  chest: "胸", back: "背", shoulders: "肩", arms: "臂"
+};
+
+// 训练计划定义：名称、适用频率、每日安排
+const trainingPlans = {
+  "push-pull-legs": {
+    name: "推/拉/腿",
+    desc: "胸+三头/背+二头/腿肩",
+    freqs: ["3-1", "2-1", "1-1"],
+    cycle: ["push", "pull", "legs"]
+  },
+  "upper-lower": {
+    name: "上/下肢",
+    desc: "上肢/下肢交替",
+    freqs: ["3-1", "2-1", "1-1"],
+    cycle: ["upper", "lower"]
+  },
+  "bro-split": {
+    name: "五分化",
+    desc: "胸/背/腿/肩/臂",
+    freqs: ["3-1"],
+    cycle: ["chest", "back", "legs", "shoulders", "arms"]
+  },
+  "fullbody": {
+    name: "全身训练",
+    desc: "每次练全身",
+    freqs: ["2-1", "1-1"],
+    cycle: ["fullbody"]
+  }
+};
+
+const planLabels = {
+  fullbody: "全身",
+  push: "胸+三头", pull: "背+二头+有氧", legs: "腿+肩", rest: "休息",
+  upper: "上肢", lower: "下肢",
+  chest: "胸", back: "背", shoulders: "肩", arms: "臂"
+};
+
+let selectedFreq = "3-1";
+let selectedTraining = "push-pull-legs";
+
+// 根据频率生成28天排程
+function generateSchedule(freq, planKey) {
+  if (freq === "none") return Array(28).fill(null);
+
+  const plan = trainingPlans[planKey];
+  if (!plan) return Array(28).fill(null);
+
+  const [trainDays, restDays] = freq.split("-").map(Number);
+  const cycle = plan.cycle;
+  let result = [];
+  let cycleIdx = 0;
+  let dayInBlock = 0;
+
+  for (let d = 0; d < 28; d++) {
+    if (dayInBlock < trainDays) {
+      result.push(cycle[cycleIdx % cycle.length]);
+      cycleIdx++;
+      dayInBlock++;
+    } else {
+      result.push("rest");
+      dayInBlock++;
+      if (dayInBlock >= trainDays + restDays) dayInBlock = 0;
+    }
+  }
+  return result;
+}
+
+// 渲染当前频率可用的训练计划卡片
+function renderTrainingPlans() {
+  const container = $('trainingCards');
+  container.innerHTML = '';
+
+  // 如果不训练，只显示一个"无训练"卡片
+  if (selectedFreq === "none") {
+    const card = document.createElement('div');
+    card.className = 'bulk-level-card selected';
+    card.style.cssText = 'flex:1 1 120px;border:1px solid var(--primary);border-radius:6px;padding:10px;text-align:center;background:#e5f8ed';
+    card.innerHTML = '<h4 style="font-size:.85rem;margin-bottom:4px">无训练</h4><p style="font-size:.65rem;margin:0;color:#666">纯减脂饮食</p>';
+    container.appendChild(card);
+    $('trainingScheduleInfo').textContent = '纯减脂模式，所有日均为休息日';
+    selectedTraining = "none";
+    return;
+  }
+
+  // 找出适用该频率的计划
+  const availablePlans = Object.entries(trainingPlans).filter(([_, p]) => p.freqs.includes(selectedFreq));
+
+  availablePlans.forEach(([key, plan], idx) => {
+    const isSelected = key === selectedTraining;
+    const card = document.createElement('div');
+    card.className = 'bulk-level-card' + (isSelected ? ' selected' : '');
+    card.dataset.training = key;
+    card.style.cssText = 'flex:1 1 110px;border:1px solid ' + (isSelected ? 'var(--primary)' : '#ccc') + ';border-radius:6px;padding:10px;text-align:center;cursor:pointer;background:' + (isSelected ? '#e5f8ed' : '#fff');
+    card.innerHTML = '<h4 style="font-size:.8rem;margin-bottom:4px">' + plan.name + '</h4><p style="font-size:.65rem;margin:0;color:#666">' + plan.desc + '</p>';
+    card.addEventListener('click', () => {
+      selectTrainingPlan(key);
+    });
+    container.appendChild(card);
+  });
+
+  // 更新排程信息
+  updateScheduleInfo();
+}
+
+function updateScheduleInfo() {
+  if (selectedFreq === "none") return;
+  const schedule = generateSchedule(selectedFreq, selectedTraining);
+  const trainDays = schedule.filter(d => d !== "rest").length;
+  const restDays = 28 - trainDays;
+  const [t, r] = selectedFreq.split("-").map(Number);
+
+  $('trainingScheduleInfo').innerHTML =
+    '<strong>排程：</strong>练' + t + '休' + r + '循环 | ' +
+    '<strong>28天：</strong>' + trainDays + '天训练 / ' + restDays + '天休息 | ' +
+    '<strong>周期：</strong>' + (trainingPlans[selectedTraining] || {}).name;
+}
+
+function selectTrainingPlan(key) {
+  selectedTraining = key;
+  renderTrainingPlans();
+  calculate();
+}
+
+function selectFreqCard(card) {
+  document.querySelectorAll('#freqCards .bulk-level-card').forEach(c => {
+    c.classList.remove('selected'); c.style.borderColor = '#ccc'; c.style.background = '#fff';
+  });
+  card.classList.add('selected');
+  card.style.borderColor = 'var(--primary)';
+  card.style.background = '#e5f8ed';
+  selectedFreq = card.dataset.freq;
+
+  // 切换到不训练时
+  if (selectedFreq === "none") {
+    selectedTraining = "none";
+  } else {
+    // 自动选择第一个可用计划
+    const availablePlans = Object.entries(trainingPlans).filter(([_, p]) => p.freqs.includes(selectedFreq));
+    selectedTraining = availablePlans[0] ? availablePlans[0][0] : "push-pull-legs";
+  }
+
+  renderTrainingPlans();
+  calculate();
+}
+
+document.querySelectorAll('#freqCards .bulk-level-card').forEach(c =>
+  c.addEventListener('click', () => selectFreqCard(c))
+);
+
+// 初始化渲染训练计划
+renderTrainingPlans();
+
+/* ========== 食物选择面板 ========== */
+function renderFoodTabs() {
+  const tabs = document.querySelectorAll('.food-category-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const cat = tab.dataset.foodCat;
+      document.querySelectorAll('.food-grid').forEach(g => g.style.display = 'none');
+      const grid = $('foodGrid-' + cat);
+      if (grid) grid.style.display = '';
+      renderFoodGrid(cat);
+    });
+  });
+  renderFoodGrid('carb');
+}
+
+function renderFoodGrid(cat) {
+  const grid = $('foodGrid-' + cat);
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.entries(foodDatabase).forEach(([key, food]) => {
+    if (food.category !== cat) return;
+    const selected = selectedFoods[cat] && selectedFoods[cat].includes(key);
+    const card = document.createElement('div');
+    card.className = 'food-card' + (selected ? ' selected' : '');
+    const unitLabel = food.unit !== 'g' ? ' (' + food.unit + ')' : '';
+    const isFruitVeg = cat === 'fruit' || cat === 'vegetable';
+    const macroHtml = isFruitVeg
+      ? '<div class="food-macros" style="color:#10b981;font-size:.7rem">' + (food.breakfast ? '早餐' : '午晚餐') + ' · 不计入营养</div>'
+      : '<div class="food-macros">' + '<span>碳:' + food.carbs + '</span><span>蛋:' + food.protein + '</span><span>脂:' + food.fat + '</span></div>';
+    card.innerHTML = '<div class="check-mark">✓</div>' +
+      '<div class="food-name">' + food.name + unitLabel + '</div>' + macroHtml;
+    card.addEventListener('click', () => {
+      if (selected) {
+        selectedFoods[cat] = selectedFoods[cat].filter(k => k !== key);
+      } else {
+        selectedFoods[cat].push(key);
+      }
+      renderFoodGrid(cat);
+      updateFoodSummary();
+      saveFoodSelection();
+      calculate();
+    });
+    grid.appendChild(card);
+  });
+  updateFoodSummary();
+}
+
+function updateFoodSummary() {
+  const labels = { carb:'碳水', protein:'蛋白', fat:'脂肪', fruit:'水果', vegetable:'蔬菜' };
+  ['carb', 'protein', 'fat', 'fruit', 'vegetable'].forEach(cat => {
+    const count = (selectedFoods[cat] || []).length;
+    const el = $('count-' + cat);
+    if (el) {
+      el.textContent = labels[cat] + ': ' + count + '种';
+      el.className = 'cat-count' + (count === 0 && cat !== 'fruit' && cat !== 'vegetable' ? ' warn' : '');
+    }
+  });
+  const warn = $('foodWarning');
+  const valid = selectedFoods.carb.length > 0 && selectedFoods.protein.length > 0 && selectedFoods.fat.length > 0;
+  const fruitValid = (selectedFoods.fruit || []).length > 0;
+  warn.className = 'food-warning' + (valid && fruitValid ? '' : ' show');
+  if (!valid && fruitValid) {
+    warn.textContent = '⚠ 碳水/蛋白/脂肪每类至少选择1种食物';
+  } else if (valid && !fruitValid) {
+    warn.textContent = '⚠ 至少选择1种水果，否则无法生成食谱';
+  } else if (!valid && !fruitValid) {
+    warn.textContent = '⚠ 碳水/蛋白/脂肪/水果每类至少选择1种食物';
+  } else {
+    warn.textContent = '';
+  }
+}
+
+function saveFoodSelection() {
+  localStorage.setItem('532_foods_v3', JSON.stringify(selectedFoods));
+}
+
+function loadFoodSelection() {
+  try {
+    const s = localStorage.getItem('532_foods_v3');
+    if (s) {
+      selectedFoods = JSON.parse(s);
+      if (!selectedFoods.fruit) selectedFoods.fruit = [];
+      if (!selectedFoods.vegetable) selectedFoods.vegetable = [];
+    }
+  } catch(e) {}
+}
+
+$('foodResetBtn').addEventListener('click', () => {
+  selectedFoods = JSON.parse(JSON.stringify(defaultSelected));
+  saveFoodSelection();
+  renderFoodGrid(document.querySelector('.food-category-tab.active').dataset.foodCat);
+  calculate();
+});
+
+/* ========== Tab切换 ========== */
+document.querySelectorAll('.tab-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    $(btn.dataset.tab + 'Tab').classList.add('active');
+    displayMode = btn.dataset.tab;
+    generateRecipes();
+  });
+});
+
+/* ========== 核心计算 ========== */
+function calculate() {
+  const w = +$('weight').value || 75;
+  const h = +$('height').value || 175;
+  const a = +$('age').value || 30;
+  const g = $('gender').value || 'male';
+  const act = +selectedActivity || 1.2;
+  const deficitW1 = +$('deficitInput').value || 200;
+
+  const bmr = g === 'male'
+    ? 10 * w + 6.25 * h - 5 * a + 5
+    : 10 * w + 6.25 * h - 5 * a - 161;
+  const tdee = Math.round(bmr * act);
+  // 第一周目标摄入
+  const targetCalW1 = tdee - deficitW1;
+  // 532比例：碳水50% 蛋白30% 脂肪20%（向下取整保证不超热量）
+  const carbsW1 = Math.floor(targetCalW1 * 0.50 / 4);
+  const targetProtein = Math.floor(targetCalW1 * 0.30 / 4);
+  const targetFat = Math.floor(targetCalW1 * 0.20 / 9);
+
+  $('bmrValue').textContent = Math.round(bmr);
+  $('tdeeValue').textContent = tdee;
+  $('targetCalValue').textContent = targetCalW1;
+  $('carbsValue').textContent = carbsW1;
+  $('proteinValue').textContent = targetProtein;
+  $('fatValue').textContent = targetFat;
+
+  weekDays = [];
+  const schedule = generateSchedule(selectedFreq, selectedTraining);
+  for (let day = 0; day < 28; day++) {
+    const weekNum = Math.floor(day / 7);
+    let dayCarbs = carbsW1 - weekNum * 15;
+    if (dayCarbs < 100) dayCarbs = 100;
+
+    const actualCal = dayCarbs * 4 + targetProtein * 4 + targetFat * 9;
+    const actualDeficit = tdee - actualCal;
+
+    const training = schedule[day] || null;
+    const isTrainingDay = training && training !== "rest";
+
+    weekDays.push({
+      dayNum: day + 1,
+      week: weekNum,
+      dayInWeek: day % 7,
+      carbs: dayCarbs,
+      protein: targetProtein,
+      fat: targetFat,
+      tdee: tdee,
+      targetCal: actualCal,
+      deficit: actualDeficit,
+      training: training,
+      isTrainingDay: isTrainingDay
+    });
+  }
+
+  generateRecipes();
+}
+
+/* ========== 工具函数 ========== */
+function pickFromPool(pool, index) {
+  return pool[index % pool.length];
+}
+
+function getLunchDinnerCarbs() {
+  return selectedFoods.carb.filter(key => foodDatabase[key].breakfast !== true);
+}
+
+function getBreakfastCarbs() {
+  return selectedFoods.carb.filter(key => foodDatabase[key].breakfast === true);
+}
+
+/* ========== 食谱生成 ========== */
+function selectFoodsForMeal(proteinTarget, carbsTarget, fatTarget, meal, dayIndex) {
+  const items = [];
+  const useCooked = displayMode === 'cooked';
+
+  const carbPool = meal === 'breakfast'
+    ? getBreakfastCarbs().map(id => foodDatabase[id]).filter(Boolean)
+    : getLunchDinnerCarbs().map(id => foodDatabase[id]).filter(Boolean);
+  const proteinPool = selectedFoods.protein.map(id => foodDatabase[id]).filter(Boolean);
+  const fatPool = selectedFoods.fat.map(id => foodDatabase[id]).filter(Boolean);
+  const meatPool = proteinPool.filter(f => f.name !== "鸡蛋");
+  const eggsFood = proteinPool.find(f => f.name === "鸡蛋");
+
+  // 果蔬（用户选中，不计入营养素：水果只早餐，蔬菜午晚餐）
+  const selectedFruits = (selectedFoods.fruit || []).map(id => foodDatabase[id]).filter(Boolean);
+  const selectedVegs = (selectedFoods.vegetable || []).map(id => foodDatabase[id]).filter(Boolean);
+
+  // === 1. 碳水（每天每餐只选一种碳水，按天轮转） ===
+  if (carbPool.length > 0 && carbsTarget > 0) {
+    const carbFood = pickFromPool(carbPool, dayIndex);
+    // 早餐燕麦：按目标碳水计算克数，上限70g；超出部分的碳水补到午晚餐
+    let cappedCarbs = 0;
+    const cp100 = useCooked ? carbFood.cookedCarbs : carbFood.carbs;
+    let g = cp100 > 0 ? Math.round(carbsTarget / cp100 * 100) : 0;
+    if (meal === 'breakfast' && carbFood.name === '燕麦' && g > 60) {
+      const actualCarbsFrom60g = Math.round(60 * cp100 / 100);
+      cappedCarbs = carbsTarget - actualCarbsFrom60g;
+      g = 60;
+    }
+    if (g > 0) {
+      items.push({ ...carbFood, g, name: useCooked ? carbFood.cookedName : carbFood.name,
+        protein: useCooked ? carbFood.cookedProtein : carbFood.protein,
+        carbs: useCooked ? carbFood.cookedCarbs : carbFood.carbs,
+        fat: useCooked ? carbFood.cookedFat : carbFood.fat });
+    }
+    if (cappedCarbs > 0) {
+      items._excessCarbs = cappedCarbs;
+    }
+  }
+
+  // === 2. 蛋白质 ===
+  if (meal === 'breakfast') {
+    // 早餐：鸡蛋（水煮蛋，最多3个=150g）
+    if (eggsFood) {
+      const existingP = items.reduce((s, it) => s + it.protein * it.g / 100, 0);
+      let needP = proteinTarget - existingP;
+      if (needP > 0) {
+        // 鸡蛋永远是水煮蛋，用熟重蛋白
+        const pp100 = eggsFood.cookedProtein;
+        let g = pp100 > 0 ? Math.round(needP / pp100 * 100) : 0;
+        // 鸡蛋上限：3个 * 50g = 150g
+        if (g > 150) g = 150;
+        if (g > 0) {
+          items.push({ ...eggsFood, g, name: "水煮蛋",
+            protein: eggsFood.cookedProtein,
+            carbs: eggsFood.cookedCarbs,
+            fat: eggsFood.cookedFat });
+        }
+      }
+    }
+  } else if (meatPool.length > 0) {
+    // 午/晚餐：每天只选一种肉类，按天轮转
+    const meatFood = pickFromPool(meatPool, dayIndex);
+    const existingP = items.reduce((s, it) => s + it.protein * it.g / 100, 0);
+    const needP = proteinTarget - existingP;
+    if (needP > 0) {
+      const pp100 = useCooked ? meatFood.cookedProtein : meatFood.protein;
+      const g = pp100 > 0 ? Math.round(needP / pp100 * 100) : 0;
+      if (g > 0) {
+        items.push({ ...meatFood, g, name: useCooked ? meatFood.cookedName : meatFood.name,
+          protein: useCooked ? meatFood.cookedProtein : meatFood.protein,
+          carbs: useCooked ? meatFood.cookedCarbs : meatFood.carbs,
+          fat: useCooked ? meatFood.cookedFat : meatFood.fat });
+      }
+    }
+  }
+
+  // === 3. 脂肪（每天只选一种脂肪来源，按天轮转；早餐用坚果/牛油果，午晚餐用油） ===
+  const existingF = items.reduce((s, it) => s + it.fat * it.g / 100, 0);
+  const needF = fatTarget - existingF;
+
+  if (meal === 'breakfast') {
+    // 早餐只用坚果、牛油果等直接食用的脂肪
+    const bfFats = fatPool.filter(f => f.cookingMethod !== "烹饪用");
+    if (bfFats.length > 0 && needF > 0.5) {
+      const fatFood = pickFromPool(bfFats, dayIndex);
+      let g = fatFood.fat > 0 ? Math.round(needF / fatFood.fat * 100) : 0;
+      if (fatFood.name === "坚果" && g > 20) g = 20;
+      if (fatFood.name === "牛油果" && g > 100) g = 100;
+      if (g > 0) {
+        items.push({ ...fatFood, g, name: useCooked ? fatFood.cookedName : fatFood.name,
+          protein: useCooked ? fatFood.cookedProtein : fatFood.protein,
+          carbs: useCooked ? fatFood.cookedCarbs : fatFood.carbs,
+          fat: useCooked ? fatFood.cookedFat : fatFood.fat });
+      }
+    }
+  }
+  if (meal !== 'breakfast' && fatPool.length > 0 && needF > 0.5) {
+    // 午/晚餐用所有脂肪来源
+    const fatFood = pickFromPool(fatPool, dayIndex);
+    let g = fatFood.fat > 0 ? Math.round(needF / fatFood.fat * 100) : 0;
+    if (fatFood.name === "橄榄油" && g > 15) g = 15;
+    if (fatFood.name === "坚果" && g > 20) g = 20;
+    if (fatFood.name === "牛油果" && g > 100) g = 100;
+    if (g > 0) {
+      items.push({ ...fatFood, g, name: useCooked ? fatFood.cookedName : fatFood.name,
+        protein: useCooked ? fatFood.cookedProtein : fatFood.protein,
+        carbs: useCooked ? fatFood.cookedCarbs : fatFood.carbs,
+        fat: useCooked ? fatFood.cookedFat : fatFood.fat });
+    }
+  }
+
+  // === 4. 果蔬（不计入营养素：水果只早餐，蔬菜午晚餐） ===
+  if (meal === 'breakfast' && selectedFruits.length > 0) {
+    const fruit = pickFromPool(selectedFruits, dayIndex);
+    if (fruit) {
+      if (fruit.unitWeight && fruit.unit !== 'g') {
+        items.push({ ...fruit, g: fruit.unitWeight, name: fruit.name, protein: 0, carbs: 0, fat: 0 });
+      } else if (fruit.cookingWeight) {
+        // 蓝莓等有特殊重量的水果
+        items.push({ ...fruit, g: fruit.cookingWeight, name: fruit.name, protein: 0, carbs: 0, fat: 0 });
+      } else {
+        items.push({ ...fruit, g: 150, name: fruit.name, protein: 0, carbs: 0, fat: 0 });
+      }
+    }
+  }
+  if ((meal === 'lunch' || meal === 'dinner') && selectedVegs.length > 0) {
+    const veg = pickFromPool(selectedVegs, dayIndex);
+    if (veg) {
+      // 膳食指南推荐每日蔬菜≥300g，午餐200g、晚餐150g（共350g）
+      const rawWeight = meal === 'lunch' ? 200 : 150;
+      if (useCooked && veg.cookingWeight) {
+        // 熟重 = 生重 × 100 / cookingWeight
+        const cookedG = Math.round(rawWeight * 100 / veg.cookingWeight);
+        items.push({ ...veg, g: cookedG, name: veg.cookedName, protein: 0, carbs: 0, fat: 0 });
+      } else {
+        items.push({ ...veg, g: rawWeight, name: useCooked ? veg.cookedName : veg.name, protein: 0, carbs: 0, fat: 0 });
+      }
+    }
+  }
+
+  return items;
+}
+
+/* ========== 餐次分配 ========== */
+function getMealAllocation(meal, dayCarbs, dayProtein, dayFat, dayData) {
+  const isTrainingDay = dayData && dayData.isTrainingDay;
+  const alloc = {
+    // 训练日：练后餐(晚餐)获得更多碳水，早餐略减
+    training: {
+      breakfast: { carbs: 0.25, protein: 0.30, fat: 0.30 },
+      lunch:     { carbs: 0.30, protein: 0.30, fat: 0.35 },
+      dinner:    { carbs: 0.45, protein: 0.40, fat: 0.35 }
+    },
+    // 休息日：碳水均匀分配，晚餐降低
+    rest: {
+      breakfast: { carbs: 0.30, protein: 0.35, fat: 0.30 },
+      lunch:     { carbs: 0.35, protein: 0.35, fat: 0.40 },
+      dinner:    { carbs: 0.35, protein: 0.30, fat: 0.30 }
+    }
+  };
+
+  const plan = isTrainingDay ? alloc.training : alloc.rest;
+  const a = plan[meal];
+  if (!a) return { carbs: 0, protein: 0, fat: 0 };
+
+  return {
+    carbs: Math.round(dayCarbs * a.carbs),
+    protein: Math.round(dayProtein * a.protein),
+    fat: Math.round(dayFat * a.fat)
+  };
+}
+
+/* ========== 渲染食谱表 ========== */
+function calcDayMacros(day) {
+  let totalC = 0, totalP = 0, totalF = 0;
+  let excessCarbs = 0;
+  const mealKeys = ['breakfast', 'lunch', 'dinner'];
+  // 先算早餐，捕获燕麦超额碳水
+  const bfM = getMealAllocation('breakfast', day.carbs, day.protein, day.fat, day);
+  const bfFoods = selectFoodsForMeal(bfM.protein, bfM.carbs, bfM.fat, 'breakfast', day.dayNum - 1);
+  bfFoods.forEach(f => {
+    if (f._excessCarbs === undefined) {
+      totalC += f.carbs * f.g / 100;
+      totalP += f.protein * f.g / 100;
+      totalF += f.fat * f.g / 100;
+    }
+  });
+  if (bfFoods._excessCarbs > 0) excessCarbs = bfFoods._excessCarbs;
+
+  mealKeys.slice(1).forEach(mealKey => {
+    const m = getMealAllocation(mealKey, day.carbs, day.protein, day.fat, day);
+    const adjustedCarbs = m.carbs + Math.round(excessCarbs / 2);
+    const foods = selectFoodsForMeal(m.protein, adjustedCarbs, m.fat, mealKey, day.dayNum - 1);
+    foods.forEach(f => {
+      totalC += f.carbs * f.g / 100;
+      totalP += f.protein * f.g / 100;
+      totalF += f.fat * f.g / 100;
+    });
+  });
+  return { carbs: Math.round(totalC), protein: Math.round(totalP), fat: Math.round(totalF) };
+}
+
+function generateRecipes() {
+  if (weekDays.length === 0) return;
+
+  // 只渲染当前活跃的tab表格
+  const tables = displayMode === 'raw'
+    ? [{ tableId: 'recipeTable', bodyId: 'recipeBody' }]
+    : [{ tableId: 'cookedRecipeTable', bodyId: 'cookedRecipeBody' }];
+
+  const savedMode = displayMode;
+  tables.forEach(({ tableId, bodyId }) => {
+    displayMode = bodyId === 'cookedRecipeBody' ? 'cooked' : 'raw';
+    const table = $(tableId);
+    const body = $(bodyId);
+    const thead = table.querySelector('thead');
+    thead.innerHTML = '';
+    body.innerHTML = '';
+
+    // 周分组头
+    const weekRow = document.createElement('tr');
+    weekRow.innerHTML = '<th rowspan="' + (selectedFreq !== 'none' ? 3 : 2) + '">餐次/项目</th>' +
+      '<th colspan="7" class="week1-header">第一周（初始碳水）</th>' +
+      '<th colspan="7" class="week2-header">第二周（碳水-15g）</th>' +
+      '<th colspan="7" class="week3-header">第三周（碳水-30g）</th>' +
+      '<th colspan="7" class="week4-header">第四周（碳水-45g）</th>';
+    thead.appendChild(weekRow);
+
+    // 日期：从明天开始
+    const today = new Date();
+    const weekColors = ['#2d6a4f', '#1e3a8a', '#78716c', '#991b1b'];
+    const weekTextColors = ['#ffffff', '#ffffff', '#ffffff', '#ffffff'];
+
+    const dayRow = document.createElement('tr');
+    for (let day = 0; day < 28; day++) {
+      const th = document.createElement('th');
+      const d = new Date(today);
+      d.setDate(d.getDate() + day + 1);
+      th.textContent = (d.getMonth() + 1) + '/' + d.getDate();
+      const weekIdx = Math.floor(day / 7);
+      th.style.background = weekColors[weekIdx];
+      th.style.color = weekTextColors[weekIdx];
+      th.style.fontWeight = 'bold';
+      th.style.fontSize = '0.8rem';
+      dayRow.appendChild(th);
+    }
+    thead.appendChild(dayRow);
+
+    // 训练行（紧贴在日期行下面）
+    if (selectedFreq !== 'none') {
+      const trTrain = document.createElement('tr');
+      for (let day = 0; day < 28; day++) {
+        const dayData = weekDays[day];
+        const weekIdx = Math.floor(day / 7);
+        const th = document.createElement('th');
+        th.style.background = weekColors[weekIdx];
+        th.style.fontSize = '0.7rem';
+        th.style.fontWeight = 'normal';
+        th.style.padding = '3px 2px';
+
+        if (dayData.training && dayData.training !== 'rest') {
+          th.textContent = planLabels[dayData.training] || dayData.training;
+          th.style.color = '#a7f3d0';
+        } else {
+          th.textContent = '休息';
+          th.style.color = 'rgba(255,255,255,0.4)';
+        }
+        trTrain.appendChild(th);
+      }
+      thead.appendChild(trTrain);
+    }
+
+    const meals = [
+      { key: 'breakfast', label: '早餐' },
+      { key: 'lunch', label: '午餐' },
+      { key: 'dinner', label: '晚餐' }
+    ];
+
+    meals.forEach(({ key: mealKey, label }, mealIdx) => {
+      const tr = document.createElement('tr');
+      tr.style.background = mealIdx % 2 === 0 ? '#ffffff' : '#f8f9fa';
+      const tdLabel = document.createElement('td');
+      tdLabel.innerHTML = '<strong>' + label + '</strong>';
+      tr.appendChild(tdLabel);
+
+      for (let day = 0; day < 28; day++) {
+        const dayData = weekDays[day];
+        let m = getMealAllocation(mealKey, dayData.carbs, dayData.protein, dayData.fat, dayData);
+        // 午餐/晚餐吸收早餐燕麦超出的碳水（平分到两餐）
+        if (mealKey === 'lunch' || mealKey === 'dinner') {
+          const bfFoods = selectFoodsForMeal(
+            getMealAllocation('breakfast', dayData.carbs, dayData.protein, dayData.fat, dayData).protein,
+            getMealAllocation('breakfast', dayData.carbs, dayData.protein, dayData.fat, dayData).carbs,
+            getMealAllocation('breakfast', dayData.carbs, dayData.protein, dayData.fat, dayData).fat,
+            'breakfast', day
+          );
+          if (bfFoods._excessCarbs > 0) {
+            m = { ...m, carbs: m.carbs + Math.round(bfFoods._excessCarbs / 2) };
+          }
+        }
+        const foods = selectFoodsForMeal(m.protein, m.carbs, m.fat, mealKey, day);
+
+        const td = document.createElement('td');
+        td.style.textAlign = 'left';
+        td.style.fontSize = '0.7rem';
+        td.style.color = '#333';
+
+        const parts = foods.map(food => {
+          const g = Math.round(food.g);
+          if (g <= 0) return '';
+          const noRawMark = ['水煮蛋', '坚果'];
+          const isRawMark = (displayMode === 'raw' && food.protein + food.carbs + food.fat > 0 && !noRawMark.includes(food.name)) ? '(生)' : '';
+          let display = food.name + isRawMark;
+          if (food.unitWeight && food.unit !== 'g') {
+            const units = Math.max(1, Math.round(g / food.unitWeight));
+            display += ' ' + units + food.unit;
+          } else {
+            display += ' ' + g + 'g';
+          }
+          return display;
+        }).filter(Boolean).join(' + ');
+
+        td.textContent = parts || '-';
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    });
+
+    // 汇总行
+    const summaryLabels = [
+      { key: 'carbs', label: '碳水', unit: 'g' },
+      { key: 'protein', label: '蛋白', unit: 'g' },
+      { key: 'fat', label: '脂肪', unit: 'g' },
+      { key: 'calories', label: '热量', unit: 'kcal' },
+      { key: 'deficit', label: '亏空', unit: '' },
+      { key: 'supplement', label: '补剂', unit: '' }
+    ];
+
+    summaryLabels.forEach(({ key, label }) => {
+      const tr = document.createElement('tr');
+      tr.className = 'summary-row';
+      const tdLabel = document.createElement('td');
+      tdLabel.innerHTML = '<strong>' + label + '</strong>';
+      tr.appendChild(tdLabel);
+
+      for (let day = 0; day < 28; day++) {
+        const dayData = weekDays[day];
+        const macros = calcDayMacros(dayData);
+        const td = document.createElement('td');
+        td.style.fontWeight = 'bold';
+        td.style.color = '#333';
+
+        if (key === 'carbs') td.textContent = dayData.carbs;
+        else if (key === 'protein') td.textContent = dayData.protein;
+        else if (key === 'fat') td.textContent = dayData.fat;
+        else if (key === 'calories') td.textContent = dayData.carbs * 4 + dayData.protein * 4 + dayData.fat * 9;
+        else if (key === 'deficit') {
+          td.innerHTML = '<span style="color:#ef4444">-' + dayData.deficit + '</span>';
+        } else if (key === 'supplement') {
+          td.textContent = '鱼油2颗+肌酸3g+蛋白粉15g';
+        }
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    });
+    // 恢复原始模式
+    displayMode = savedMode;
+  });
+}
+
+/* ========== Excel导出 ========== */
+$('downloadBtn').addEventListener('click', () => {
+  const w = +$('weight').value || 75;
+  const basic = [
+    ['532碳水渐减减脂食谱'],
+    ['当前体重(kg)', w],
+    ['基础代谢', $('bmrValue').textContent],
+    ['每日总消耗', $('tdeeValue').textContent],
+    ['第一周亏空', $('deficitInput').value + ' kcal'],
+    ['目标摄入', $('targetCalValue').textContent + ' kcal'],
+    ['每日蛋白(g)', $('proteinValue').textContent],
+    ['每日碳水(g)', $('carbsValue').textContent],
+    ['每日脂肪(g)', $('fatValue').textContent],
+    []
+  ];
+
+  const plan = [['天数', '周次', '碳水(g)', '蛋白质(g)', '脂肪(g)', '摄入热量(kcal)', '亏空热量']];
+  weekDays.forEach(day => {
+    const cal = day.carbs * 4 + day.protein * 4 + day.fat * 9;
+    plan.push(['第' + day.dayNum + '天', '第' + (day.week + 1) + '周', day.carbs, day.protein, day.fat, cal, -day.deficit]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet([...basic, ...plan]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '532计划');
+  XLSX.writeFile(wb, '532碳水渐减减脂食谱_' + w + 'kg.xlsx');
+});
+
+$('recipeDlBtn').addEventListener('click', () => {
+  const data = [['532碳水渐减减脂食谱 - 28天'], []];
+  const meals = [
+    { key: 'breakfast', label: '早餐' },
+    { key: 'lunch', label: '午餐' },
+    { key: 'dinner', label: '晚餐' }
+  ];
+
+  weekDays.forEach(day => {
+    data.push(['第' + day.dayNum + '天 (第' + (day.week + 1) + '周 碳水' + day.carbs + 'g 亏空' + day.deficit + 'kcal)']);
+    data.push(['餐次', '食物', '重量/单位']);
+    // 先算早餐燕麦超额
+    const bfM = getMealAllocation('breakfast', day.carbs, day.protein, day.fat, day);
+    const bfFoods = selectFoodsForMeal(bfM.protein, bfM.carbs, bfM.fat, 'breakfast', day.dayNum - 1);
+    let excessCarbs = bfFoods._excessCarbs || 0;
+
+    meals.forEach(({ key: mealKey, label }) => {
+      let m = getMealAllocation(mealKey, day.carbs, day.protein, day.fat, day);
+      if ((mealKey === 'lunch' || mealKey === 'dinner') && excessCarbs > 0) {
+        m = { ...m, carbs: m.carbs + Math.round(excessCarbs / 2) };
+      }
+      const foods = selectFoodsForMeal(m.protein, m.carbs, m.fat, mealKey, day.dayNum - 1);
+      data.push([label, '', '']);
+      foods.forEach(f => {
+        const g = Math.round(f.g);
+        let weight = '';
+        if (f.unitWeight && f.unit !== 'g') {
+          const units = Math.max(1, Math.round(g / f.unitWeight));
+          weight = units + f.unit;
+        } else {
+          weight = g + f.unit;
+        }
+        data.push(['', f.name, weight]);
+      });
+    });
+    // 训练行
+    if (day.training && day.training !== 'rest') {
+      data.push(['训练', planLabels[day.training] || day.training, '']);
+    } else {
+      data.push(['训练', '休息', '']);
+    }
+    data.push([]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '28天食谱');
+  XLSX.writeFile(wb, '532碳水渐减_28天食谱.xlsx');
+});
+
+/* ========== 重置 ========== */
+$('resetBtn').addEventListener('click', () => {
+  $('weight').value = 75; $('height').value = 175; $('age').value = 30;
+  $('gender').value = 'male';
+  $('deficitInput').value = 200;
+  selectedActivity = '1.2';
+  activityCards.forEach((c, i) => {
+    if (i === 0) { c.classList.add('selected'); c.style.borderColor = 'var(--primary)'; c.style.background = '#e5f8ed'; }
+    else { c.classList.remove('selected'); c.style.borderColor = '#ccc'; c.style.background = '#fff'; }
+  });
+  selectedFreq = '3-1';
+  document.querySelectorAll('#freqCards .bulk-level-card').forEach(c => {
+    if (c.dataset.freq === '3-1') {
+      c.classList.add('selected'); c.style.borderColor = 'var(--primary)'; c.style.background = '#e5f8ed';
+    } else {
+      c.classList.remove('selected'); c.style.borderColor = '#ccc'; c.style.background = '#fff';
+    }
+  });
+  selectedTraining = 'push-pull-legs';
+  renderTrainingPlans();
+  selectedFoods = JSON.parse(JSON.stringify(defaultSelected));
+  localStorage.removeItem('532_foods_v3');
+  renderFoodGrid('carb');
+  calculate();
+});
+
+/* ========== 初始化 ========== */
+window.onload = function() {
+  loadFoodSelection();
+  renderFoodTabs();
+  calculate();
+};
+</script>
+</body>
+</html>
