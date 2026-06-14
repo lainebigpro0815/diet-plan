@@ -270,7 +270,7 @@ const foodDatabase = {
   pumpkin:    { name:"南瓜", cookedName:"熟南瓜", carbs:7, protein:1, fat:0.1, cookedCarbs:6, cookedProtein:0.8, cookedFat:0, category:"carb", unit:"g", cookingMethod:"蒸", breakfast:false },
   oats:       { name:"燕麦", cookedName:"燕麦", carbs:60, protein:13, fat:7, cookedCarbs:60, cookedProtein:13, cookedFat:7, category:"carb", unit:"g", cookingMethod:"煮", breakfast:true },
   corn:       { name:"甜玉米", cookedName:"熟玉米", carbs:18, protein:3, fat:0.8, cookedCarbs:18, cookedProtein:3, cookedFat:0.8, category:"carb", unit:"根", unitWeight:250, cookingMethod:"煮", breakfast:true },
-  wholeWheatBread:{ name:"全麦面包", cookedName:"全麦面包", carbs:43, protein:11, fat:3, cookedCarbs:43, cookedProtein:11, cookedFat:3, category:"carb", unit:"片", unitWeight:35, cookingMethod:"直接食用", breakfast:true },
+  wholeWheatBread:{ name:"全麦面包", cookedName:"全麦面包", carbs:43, protein:11, fat:3, cookedCarbs:43, cookedProtein:11, cookedFat:3, category:"carb", unit:"g", cookingMethod:"直接食用", breakfast:true },
 
   eggs:       { name:"鸡蛋", cookedName:"水煮蛋", carbs:1, protein:13, fat:10, cookedCarbs:1, cookedProtein:13, cookedFat:10, category:"protein", unit:"个", unitWeight:50, cookingMethod:"煮", breakfast:true },
   chickenBreast:{ name:"鸡胸肉", cookedName:"熟鸡胸", carbs:0, protein:23, fat:2.5, cookedCarbs:0, cookedProtein:32, cookedFat:3, category:"protein", unit:"g", cookingMethod:"煮/蒸", breakfast:false },
@@ -697,14 +697,18 @@ function selectFoodsForMeal(proteinTarget, carbsTarget, fatTarget, meal, dayInde
   // === 1. 碳水（每天每餐只选一种碳水，按天轮转） ===
   if (carbPool.length > 0 && carbsTarget > 0) {
     const carbFood = pickFromPool(carbPool, dayIndex);
-    // 早餐燕麦：按目标碳水计算克数，上限70g；超出部分的碳水补到午晚餐
+    // 早餐燕麦：按目标碳水计算克数，上限65g；超出部分的碳水补到午晚餐
     let cappedCarbs = 0;
     const cp100 = useCooked ? carbFood.cookedCarbs : carbFood.carbs;
     let g = cp100 > 0 ? Math.round(carbsTarget / cp100 * 100) : 0;
-    if (meal === 'breakfast' && carbFood.name === '燕麦' && g > 60) {
-      const actualCarbsFrom60g = Math.round(60 * cp100 / 100);
+    // 面包按50g取整
+    if (carbFood.name === '全麦面包' && g > 0) {
+      g = Math.max(50, Math.round(g/50)*50);
+    }
+    if (meal === 'breakfast' && carbFood.name === '燕麦' && g > 65) {
+      const actualCarbsFrom60g = Math.round(65 * cp100 / 100);
       cappedCarbs = carbsTarget - actualCarbsFrom60g;
-      g = 60;
+      g = 65;
     }
     if (g > 0) {
       items.push({ ...carbFood, g, name: useCooked ? carbFood.cookedName : carbFood.name,
@@ -988,8 +992,10 @@ function generateRecipes() {
         const parts = foods.map(food => {
           const g = Math.round(food.g);
           if (g <= 0) return '';
-          const noRawMark = ['水煮蛋', '坚果'];
-          const isRawMark = (displayMode === 'raw' && food.protein + food.carbs + food.fat > 0 && !noRawMark.includes(food.name)) ? '(生)' : '';
+          const noRawMark = ['水煮蛋', '坚果', '全麦面包'];
+          const alwaysRawMark = (food.name === '燕麦' || (displayMode === 'raw' && food.protein + food.carbs + food.fat > 0 && !noRawMark.includes(food.name)));
+          const isRawMark = alwaysRawMark ? '(生)' : '';
+          const isCookedMark = ['水煮蛋', '坚果', '全麦面包'].includes(food.name) ? '(熟)' : '';
           let display = food.name + isRawMark;
           if (food.unitWeight && food.unit !== 'g') {
             const units = Math.max(1, Math.round(g / food.unitWeight));

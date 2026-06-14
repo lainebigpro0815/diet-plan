@@ -227,7 +227,7 @@ const foodDatabase={
   eggs:{name:"鸡蛋",carbs:1.1,protein:6.5,fat:5,cookedCarbs:1.1,cookedProtein:6.5,cookedFat:4,sodium:120,potassium:130,magnesium:10,unit:"个",unitWeight:50,cookingMethod:"煮",breakfast:true,lunch:false,dinner:false},
   beef:{name:"瘦牛肉",carbs:0,protein:22,fat:5,cookedCarbs:0,cookedProtein:32,cookedFat:4,sodium:50,potassium:320,magnesium:20,unit:"g",cookingMethod:"煮/炒",breakfast:false,lunch:true,dinner:true},
   chickenBreast:{name:"鸡胸肉",carbs:0,protein:23,fat:3.6,cookedCarbs:0,cookedProtein:32,cookedFat:2,sodium:45,potassium:300,magnesium:25,unit:"g",cookingMethod:"煮/蒸",breakfast:false,lunch:true,dinner:true},
-  chickenThigh:{name:"鸡腿",carbs:0,protein:20,fat:8,cookedCarbs:0,cookedProtein:28,cookedFat:10,sodium:60,potassium:250,magnesium:18,unit:"g",cookingMethod:"烤/煎",breakfast:false,lunch:true,dinner:true},
+  chickenThigh:{name:"鸡腿",carbs:0,protein:20,fat:13,cookedCarbs:0,cookedProtein:28,cookedFat:16,sodium:60,potassium:250,magnesium:18,unit:"g",cookingMethod:"烤/煎",breakfast:false,lunch:true,dinner:true},
   shrimp:{name:"虾",carbs:0,protein:15,fat:3,cookedCarbs:0,cookedProtein:18,cookedFat:1,sodium:300,potassium:200,magnesium:30,unit:"g",cookingMethod:"烤/煎",breakfast:false,lunch:true,dinner:true},
   almonds:{name:"坚果",carbs:21,protein:20,fat:54,cookedCarbs:21,cookedProtein:20,cookedFat:54,sodium:1,potassium:700,magnesium:260,unit:"g",cookingMethod:"直接食用",breakfast:true,lunch:false,dinner:false},
   peanutButter:{name:"花生酱",carbs:20,protein:25,fat:50,cookedCarbs:20,cookedProtein:25,cookedFat:50,sodium:10,potassium:650,magnesium:170,unit:"g",cookingMethod:"涂抹",breakfast:true,lunch:false,dinner:false},
@@ -716,18 +716,27 @@ function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
           const eggC=(useCooked?foodDatabase.eggs.cookedCarbs:foodDatabase.eggs.carbs)*eggCount*50/100;
           const needC=Math.max(10,cT-eggC);
           let grams=needC/(cVal/100);
-          // 早餐燕麦上限60g，超出碳水补到午晚餐
-          if(key==='oats'&&grams>60){
-            const actualC=Math.round(60*cVal/100);
+          // 早餐燕麦上限65g，超出碳水补到午晚餐
+          // 面包按50g取整，多余碳水补到午晚餐
+          if(key==='wholeBread' && grams>0){
+            const r=Math.max(50,Math.round(grams/50)*50);
+            const actualCb=Math.round(r*cVal/100);
+            const diffCb=needC-actualCb;
+            grams=r;
+            window._oatsExcessCarbs=(window._oatsExcessCarbs||{})[idx]!==undefined?window._oatsExcessCarbs:{};
+            window._oatsExcessCarbs[idx]=diffCb;
+          }
+          if(key==='oats'&&grams>65){
+            const actualC=Math.round(65*cVal/100);
             const excessC=needC-actualC;
-            grams=60;
+            grams=65;
             window._oatsExcessCarbs=(window._oatsExcessCarbs||{})[idx]!==undefined?window._oatsExcessCarbs:{};
             window._oatsExcessCarbs[idx]=excessC;
           } else {
             if(!window._oatsExcessCarbs) window._oatsExcessCarbs={};
-            window._oatsExcessCarbs[idx]=0;
+            if(window._oatsExcessCarbs[idx]===undefined) window._oatsExcessCarbs[idx]=0;
           }
-          items.push(makeItem(f.name,grams,f.unit,key));
+          items.push(makeItem(f.name+(key==='oats'?"(生)":(key==='wholeBread'?"(熟)":"")),grams,f.unit,key));
         }
       }
     }
@@ -752,9 +761,9 @@ function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
         const cVal=useCooked?fd.cookedCarbs:fd.carbs;
         if(cVal>0){
           const oldGrams=(carbItem.unit==="个"||carbItem.unit==="根")?carbItem.weight*(fd.unitWeight||50):carbItem.weight;
-          const newGrams=Math.max(0,oldGrams+cDiff/(cVal/100));
+          let newGrams; if(carbItem.key==='oats'){newGrams=Math.min(65,Math.max(0,oldGrams+cDiff/(cVal/100)))}else if(carbItem.key==='wholeBread'){const raw=Math.max(0,oldGrams+cDiff/(cVal/100));newGrams=raw>0?Math.max(50,Math.round(raw/50)*50):0}else{newGrams=Math.max(0,oldGrams+cDiff/(cVal/100))}
           const ci=items.indexOf(carbItem);
-          items[ci]=makeItem(foodDatabase[carbItem.key].name,newGrams,foodDatabase[carbItem.key].unit,carbItem.key);
+          items[ci]=makeItem(foodDatabase[carbItem.key].name+(carbItem.key==='oats'?"(生)":(carbItem.key==='wholeBread'?"(熟)":"")),newGrams,foodDatabase[carbItem.key].unit,carbItem.key);
         }
       }
     }
@@ -770,17 +779,9 @@ function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
   const coarseCarbs=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&["sweetPotato","pumpkin","brownRice"].includes(k)&&foodDatabase[k].lunch);
   const regularCarbs=Object.keys(selectedFoods).filter(k=>selectedFoods[k]&&foodCategories.carbs.includes(k)&&foodDatabase[k].lunch&&!coarseCarbs.includes(k));
 
-  // 扣掉鸡蛋后，剩余蛋白质/脂肪归本餐
-  const fdE=foodDatabase.eggs;
-  const eggGrams=isFast?50:100;
-  const eggP=useCooked?fdE.cookedProtein:fdE.protein;
-  const eggF=useCooked?fdE.cookedFat:fdE.fat;
-  const eggTotalP=eggP*eggGrams/100;
-  const eggTotalF=eggF*eggGrams/100;
-  const remainP=Math.max(0,pT-eggTotalP);
-  const remainF=isFast?0:Math.max(0,fT-eggTotalF);
-  const mealP=remainP;
-  const mealF=isFast?0:remainF;
+      // pT/fT 已在 buildMealRow 中扣除了早餐鸡蛋贡献，此处不再重复扣除
+      const mealP=pT;
+      const mealF=isFast?0:fT;
 
   // === 午餐/晚餐：按 碳水→蛋白质→脂肪→蔬菜 顺序 ===
 
@@ -794,7 +795,7 @@ function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
         const cVal=useCooked?f.cookedCarbs:f.carbs;
         if(cVal>0){
           carbGrams=cT/(cVal/100);
-          items.push(makeItem(f.name+"(熟)",carbGrams,f.unit,carbKey));
+          items.push(makeItem(f.name+(useCooked?"(熟)":"(生)"),carbGrams,f.unit,carbKey));
         }
       }
     }else{
@@ -841,21 +842,38 @@ function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
     }
   }
 
-  // 4. 脂肪：非断食日补足到目标（断食日0）
+  // 4. 脂肪：先加烹饪油（橄榄油），再补坚果/花生酱
   if(!isFast&&mealF>0&&fatKeys.length){
     const meatMacro=calcMacros(meatKey,meatGrams);
-    const needF=Math.max(1,mealF-vegMacro.f-carbMacro.f-meatMacro.f);
-    const key=pickOne(fatKeys,idx);
-    const f=foodDatabase[key];
-    const fVal=useCooked?f.cookedFat:f.fat;
-    if(fVal>0){
-      items.push(makeItem(f.name+(useCooked?"(熟)":"(生)"),needF/(fVal/100),f.unit,key));
+    const otherFat=vegMacro.f+carbMacro.f+meatMacro.f;
+    // 烹饪用油：选了橄榄油且中晚餐，固定5-15ml
+    const addOlive=selectedFoods.oliveOil&&fatKeys.includes('oliveOil')&&(meal==='lunch'||meal==='dinner');
+    if(addOlive){
+      const ov=useCooked?foodDatabase.oliveOil.cookedFat:foodDatabase.oliveOil.fat;
+      let og=Math.round(Math.max(5,mealF-otherFat)/(ov/100));
+      if(og>15)og=15;
+      items.push(makeItem(foodDatabase.oliveOil.name+(useCooked?"(熟)":"(生)"),og,foodDatabase.oliveOil.unit,'oliveOil'));
+    }
+    // 补充脂肪：坚果/花生酱 — 选中了就必须出现
+    const cf=items.reduce((s,it)=>{const fd=foodDatabase[it.key];if(!fd)return s;const g=(it.unit==="个"||it.unit==="根")?it.weight*(fd.unitWeight||50):it.weight;return s+calcMacros(it.key,g).f;},0);
+    const nf=mealF-cf;
+    const nuts=fatKeys.filter(k=>k!=='oliveOil');
+    if(nuts.length>0){
+      const nk=pickOne(nuts,idx);
+      const nv=useCooked?foodDatabase[nk].cookedFat:foodDatabase[nk].fat;
+      // 至少5g坚果，确保选了就能看到；有余量时给足
+      const ng=Math.round(Math.max(5,nf)/(nv/100));
+      if(ng>0)items.push(makeItem(foodDatabase[nk].name+(useCooked?"(熟)":"(生)"),ng,foodDatabase[nk].unit,nk));
+    }else if(!addOlive){
+      const dk=pickOne(fatKeys,idx);
+      const dv=useCooked?foodDatabase[dk].cookedFat:foodDatabase[dk].fat;
+      if(dv>0)items.push(makeItem(foodDatabase[dk].name+(useCooked?"(熟)":"(生)"),Math.max(1,nf)/(dv/100),foodDatabase[dk].unit,dk));
     }
   }
 
   // 5. 蔬菜（放在最后，显示顺序：碳水→蛋白质→脂肪→蔬菜）
   if(vegKey&&vegGrams>0){
-    items.push(makeItem(foodDatabase[vegKey].name+"(熟)",vegGrams,"g",vegKey));
+    items.push(makeItem(foodDatabase[vegKey].name+(useCooked?"(熟)":"(生)"),vegGrams,"g",vegKey));
   }
 
   // 6. 平衡：根据目标碳蛋脂微调食物克数，使实际值精确匹配目标
@@ -900,18 +918,20 @@ function selectFoodsForMeal(pT,cT,fT,meal,idx,isFast){
       }
     }
 
-    // 脂肪偏差 → 调整油脂克数
+    // 脂肪偏差 → 优先调坚果/花生酱，橄榄油保底5ml
     if(!isFast&&fatKeys.length){
       const fDiff=mealF-actF;
-      const fatItem=items.find(i=>foodCategories.fat.includes(i.key));
+      let fatItem=items.find(i=>foodCategories.fat.includes(i.key)&&i.key!=='oliveOil');
+      if(!fatItem)fatItem=items.find(i=>foodCategories.fat.includes(i.key));
       if(fatItem){
         const fd=foodDatabase[fatItem.key];
         const fVal2=useCooked?fd.cookedFat:fd.fat;
         if(fVal2>0){
           const fi=items.findIndex(i=>i.key===fatItem.key);
           const oldGrams=fi!==-1?((items[fi].unit==="个"||items[fi].unit==="根")?items[fi].weight*(fd.unitWeight||50):items[fi].weight):0;
-          const newGrams=Math.max(0,oldGrams+fDiff/(fVal2/100));
-          if(fi!==-1)items[fi]=makeItem(foodDatabase[fatItem.key].name+(useCooked?"(熟)":"(生)"),newGrams,foodDatabase[fatItem.key].unit,fatItem.key);
+          const minKeep=fatItem.key==='oliveOil'?5:3;
+          const newGrams=Math.max(minKeep,oldGrams+fDiff/(fVal2/100));
+          if(fi!==-1)items[fi]=makeItem(fd.name+(useCooked?"(熟)":"(生)"),newGrams,fd.unit,fatItem.key);
           actF=mealF;
         }
       }

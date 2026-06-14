@@ -393,9 +393,9 @@ const $ = id => document.getElementById(id)
 const foodDatabase = {
   // ===== 碳水来源 =====
   rice:         { name: "白米饭(生)", cookedName: "白米饭(熟)", carbs: 77, protein: 7.2, fat: 0,   cookedCarbs: 28, cookedProtein: 2.6, cookedFat: 0,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.1, vitB1: 0.11, vitB2: 0.03, vitB6: 0.15, vitB12: 0, folate: 4, niacin: 1.6, calcium: 10, iron: 0.8, zinc: 1.1, magnesium: 25, selenium: 10 },
-  steamedBread: { name: "馒头",       cookedName: "馒头",       carbs: 50, protein: 7,   fat: 1,   cookedCarbs: 50, cookedProtein: 7,   cookedFat: 1,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.5, vitB1: 0.06, vitB2: 0.05, vitB6: 0.05, vitB12: 0, folate: 18, niacin: 1.0, calcium: 18, iron: 1.5, zinc: 0.7, magnesium: 18, selenium: 8 },
+  steamedBread: { name: "馒头(熟)",       cookedName: "馒头(熟)",       carbs: 50, protein: 7,   fat: 1,   cookedCarbs: 50, cookedProtein: 7,   cookedFat: 1,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.5, vitB1: 0.06, vitB2: 0.05, vitB6: 0.05, vitB12: 0, folate: 18, niacin: 1.0, calcium: 18, iron: 1.5, zinc: 0.7, magnesium: 18, selenium: 8 },
   noodles:      { name: "拉面(生)",   cookedName: "拉面(熟)",   carbs: 50, protein: 6,   fat: 0.5, cookedCarbs: 20, cookedProtein: 2.4, cookedFat: 0.2, category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.3, vitB1: 0.15, vitB2: 0.04, vitB6: 0.05, vitB12: 0, folate: 8, niacin: 1.2, calcium: 12, iron: 1.2, zinc: 0.8, magnesium: 15, selenium: 10 },
-  oats:         { name: "燕麦片(生)", cookedName: "燕麦片(熟)", carbs: 60, protein: 13,  fat: 7,   cookedCarbs: 60, cookedProtein: 13,  cookedFat: 7,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.7, vitB1: 0.5, vitB2: 0.14, vitB6: 0.1, vitB12: 0, folate: 56, niacin: 1.0, calcium: 54, iron: 4.3, zinc: 3.6, magnesium: 138, selenium: 29 },
+  oats:         { name: "燕麦片(生)", cookedName: "燕麦片(生)", carbs: 60, protein: 13,  fat: 7,   cookedCarbs: 60, cookedProtein: 13,  cookedFat: 7,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.7, vitB1: 0.5, vitB2: 0.14, vitB6: 0.1, vitB12: 0, folate: 56, niacin: 1.0, calcium: 54, iron: 4.3, zinc: 3.6, magnesium: 138, selenium: 29 },
   corn:         { name: "甜玉米",     cookedName: "熟甜玉米",   carbs: 18, protein: 3,   fat: 0.8, cookedCarbs: 18, cookedProtein: 3,   cookedFat: 0.8, category: "carb", unit: "根", unitWeight: 250, vitA: 9, vitC: 7, vitD: 0, vitE: 0.1, vitB1: 0.15, vitB2: 0.05, vitB6: 0.07, vitB12: 0, folate: 42, niacin: 1.8, calcium: 2, iron: 0.5, zinc: 0.5, magnesium: 37, selenium: 0.5 },
   sweetPotato:  { name: "红薯(生)",   cookedName: "熟红薯",     carbs: 20, protein: 1.6, fat: 0,   cookedCarbs: 20, cookedProtein: 1.6, cookedFat: 0,   category: "carb", vitA: 709, vitC: 20, vitD: 0, vitE: 0.3, vitB1: 0.08, vitB2: 0.05, vitB6: 0.2, vitB12: 0, folate: 5, niacin: 0.6, calcium: 30, iron: 0.6, zinc: 0.3, magnesium: 25, selenium: 0.6 },
   brownRice:    { name: "糙米(生)",   cookedName: "熟糙米",     carbs: 72, protein: 8,   fat: 2,   cookedCarbs: 26, cookedProtein: 3,   cookedFat: 1,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.4, vitB1: 0.4, vitB2: 0.04, vitB6: 0.5, vitB12: 0, folate: 8, niacin: 4.5, calcium: 23, iron: 1.5, zinc: 2.0, magnesium: 143, selenium: 20 },
@@ -403,7 +403,7 @@ const foodDatabase = {
   buckwheat:    { name: "荞麦面(生)", cookedName: "熟荞麦面",   carbs: 71, protein: 11,  fat: 2,   cookedCarbs: 23, cookedProtein: 3.5, cookedFat: 0.6, category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.7, vitB1: 0.4, vitB2: 0.2, vitB6: 0.4, vitB12: 0, folate: 40, niacin: 4.0, calcium: 15, iron: 2.2, zinc: 2.5, magnesium: 231, selenium: 2.3 },
   potato:       { name: "土豆(生)",   cookedName: "熟土豆",     carbs: 17, protein: 2,   fat: 0,   cookedCarbs: 17, cookedProtein: 2,   cookedFat: 0,   category: "carb", vitA: 0, vitC: 20, vitD: 0, vitE: 0.01,vitB1: 0.08, vitB2: 0.03, vitB6: 0.3, vitB12: 0, folate: 10, niacin: 1.1, calcium: 12, iron: 0.8, zinc: 0.3, magnesium: 23, selenium: 0.3 },
   taro:         { name: "芋头(生)",   cookedName: "熟芋头",     carbs: 18, protein: 1.5, fat: 0,   cookedCarbs: 18, cookedProtein: 1.5, cookedFat: 0,   category: "carb", vitA: 2, vitC: 5, vitD: 0, vitE: 0.3, vitB1: 0.09, vitB2: 0.03, vitB6: 0.3, vitB12: 0, folate: 24, niacin: 0.6, calcium: 36, iron: 0.5, zinc: 0.2, magnesium: 21, selenium: 0.7 },
-  wholeWheatBread:{ name: "全麦面包", cookedName: "全麦面包",   carbs: 43, protein: 11,  fat: 3,   cookedCarbs: 43, cookedProtein: 11,  cookedFat: 3,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.7, vitB1: 0.4, vitB2: 0.2, vitB6: 0.3, vitB12: 0, folate: 40, niacin: 4.0, calcium: 107, iron: 2.5, zinc: 1.8, magnesium: 82, selenium: 36 },
+  wholeWheatBread:{ name: "全麦面包(熟)", cookedName: "全麦面包(熟)",   carbs: 43, protein: 11,  fat: 3,   cookedCarbs: 43, cookedProtein: 11,  cookedFat: 3,   category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.7, vitB1: 0.4, vitB2: 0.2, vitB6: 0.3, vitB12: 0, folate: 40, niacin: 4.0, calcium: 107, iron: 2.5, zinc: 1.8, magnesium: 82, selenium: 36 },
   riceCakes:    { name: "年糕(生)",   cookedName: "熟年糕",     carbs: 30, protein: 3,   fat: 0.5, cookedCarbs: 30, cookedProtein: 3,   cookedFat: 0.5, category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.1, vitB1: 0.02, vitB2: 0.01, vitB6: 0.02, vitB12: 0, folate: 2, niacin: 0.4, calcium: 6, iron: 0.4, zinc: 0.5, magnesium: 8, selenium: 7 },
   pasta:        { name: "意面(生)",   cookedName: "熟意面",     carbs: 70, protein: 12,  fat: 1.5, cookedCarbs: 25, cookedProtein: 4.5, cookedFat: 0.5, category: "carb", vitA: 0, vitC: 0, vitD: 0, vitE: 0.2, vitB1: 0.1, vitB2: 0.05, vitB6: 0.05, vitB12: 0, folate: 7, niacin: 1.5, calcium: 15, iron: 1.3, zinc: 1.0, magnesium: 30, selenium: 30 },
 
@@ -931,10 +931,14 @@ function generateRecipes(carbMap, dailyMacros, weekPrefix = '', vegetableAssignm
         const bKey = pickFromPool(breakfastCarbs.length > 0 ? breakfastCarbs : carbPool, i)
         if (bKey && getFood(bKey).carbs > 0) {
           let g = round(c / getFood(bKey).carbs * 100)
-          if (bKey === 'oats' && g > 60) {
-            const actualCarbs = Math.round(60 * getFood('oats').carbs / 100)
+        // 面包按50g取整
+        if ((bKey === 'wholeWheatBread' || bKey === 'steamedBread') && g > 0) {
+          g = Math.max(50, Math.round(g/50)*50);
+        }
+          if (bKey === 'oats' && g > 65) {
+            const actualCarbs = Math.round(65 * getFood('oats').carbs / 100)
             breakfastOatsExcess = c - actualCarbs
-            g = 60
+            g = 65
           }
           items.push({...getFood(bKey), g})
         }
@@ -1437,10 +1441,14 @@ function generateCookedRecipes(carbMap, dailyMacros, weekPrefix = '', vegetableA
         if (bKey && getFood(bKey).carbs > 0) {
           const food = getFood(bKey)
           let g = round(c / food.cookedCarbs * 100)
-          if (bKey === 'oats' && g > 60) {
-            const actualCarbs = Math.round(60 * food.carbs / 100)
+        // 面包按50g取整
+        if ((bKey === 'wholeWheatBread' || bKey === 'steamedBread') && g > 0) {
+          g = Math.max(50, Math.round(g/50)*50);
+        }
+          if (bKey === 'oats' && g > 65) {
+            const actualCarbs = Math.round(65 * food.carbs / 100)
             breakfastOatsExcess = c - actualCarbs
-            g = 60
+            g = 65
           }
           items.push({...food, g, cooked: true})
         }

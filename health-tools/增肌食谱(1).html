@@ -395,6 +395,17 @@
                     </div>
                 </section>
 
+                <!-- 自定义宏量配比 -->
+                <section>
+                    <h3>第三步半：碳蛋脂配比 (g/kg体重)</h3>
+                    <div class="basic-row">
+                        <div class="input-group"><label>蛋白质(g/kg)</label><input type="number" id="custom-protein" value="1.6" min="0.8" max="3.0" step="0.1"></div>
+                        <div class="input-group"><label>脂肪(g/kg)</label><input type="number" id="custom-fat" value="0.9" min="0.3" max="2.0" step="0.1"></div>
+                        <div class="input-group"><label>碳水(g/kg)</label><input type="number" id="custom-carb" value="3.5" min="1.0" max="8.0" step="0.1"></div>
+                    </div>
+                    <p style="font-size:.7rem;color:#64748b;margin-top:6px">选训练经验会自动填充默认值，也可手动修改</p>
+                </section>
+
                 <!-- 热量盈余 -->
                 <section>
                     <h3>第四步：热量盈余</h3>
@@ -562,7 +573,7 @@ function selectBulkCard(list, target){
     calcBulk();
 }
 bulkPalCards.forEach(c=>c.addEventListener('click',()=>selectBulkCard(bulkPalCards,c)));
-bulkExpCards.forEach(c=>c.addEventListener('click',()=>selectBulkCard(bulkExpCards,c)));
+bulkExpCards.forEach(c=>c.addEventListener('click',()=>{selectBulkCard(bulkExpCards,c);const e=c.dataset.exp;const pm={novice:1.6,intermediate:1.8,advanced:2.0};const fm={novice:0.9,intermediate:1.0,advanced:1.0};const cm={novice:3.5,intermediate:4.5,advanced:5.0};$('custom-protein').value=pm[e];$('custom-fat').value=fm[e];$('custom-carb').value=cm[e]}));
 
 // 盈余输入框变化时重新计算
 $('training-surplus').addEventListener('input', calcBulk);
@@ -645,10 +656,13 @@ function calcBulk(){
   const proMap = {novice: 1.6, intermediate: 1.8, advanced: 2.0};
   const fatMap = {novice: 0.9, intermediate: 1.0, advanced: 1.0};
   const carbMap= {novice: 3.5, intermediate: 4.5, advanced: 5.0};
-
-  const pro  = Math.round(w * proMap[exp]);
-  const fat  = Math.round(w * fatMap[exp]);
-  let carb = Math.round(w * carbMap[exp]);
+  // 自定义宏量配比（优先用用户输入值）
+  const proPerKg = +($('custom-protein').value||proMap[exp]);
+  const fatPerKg = +($('custom-fat').value||fatMap[exp]);
+  const carbPerKg= +($('custom-carb').value||carbMap[exp]);
+  const pro  = Math.round(w * proPerKg);
+  const fat  = Math.round(w * fatPerKg);
+  let carb = Math.round(w * carbPerKg);
 
   const proKcal = pro * 4, fatKcal = fat * 9, carbKcal = carb * 4;
   const leftKcal = trainTarget - (proKcal + fatKcal + carbKcal);
@@ -758,6 +772,9 @@ function dlBulk() {
   const proMap = {novice: 1.6, intermediate: 1.8, advanced: 2.0};
   const fatMap = {novice: 0.9, intermediate: 1.0, advanced: 1.0};
   const carbMap= {novice: 3.5, intermediate: 4.5, advanced: 5.0};
+  const proPerKg = +($('custom-protein').value||proMap[exp]);
+  const fatPerKg = +($('custom-fat').value||fatMap[exp]);
+  const carbPerKg= +($('custom-carb').value||carbMap[exp]);
 
   const basic = [
     ['增肌计划(28天)'],
@@ -766,7 +783,7 @@ function dlBulk() {
     [],['计算过程'],
     ['基础代谢(BMR)', `${bmr} kcal`], ['每日总消耗(TDEE)', `${tdee} kcal`],
     ['目标热量', `${target} kcal`], ['预计每周增重', `${weeklyGain} kg`],
-    [`蛋白质 (${proMap[exp]} g/kg)`, `${pro} g`], [`脂肪 (${fatMap[exp]} g/kg)`, `${fat} g`],
+    [`蛋白质 (${proPerKg} g/kg)`, `${pro} g`], [`脂肪 (${fatPerKg} g/kg)`, `${fat} g`],
     [`训练日碳水`, `${trainCarb} g`], [`休息日碳水`, `${restCarb} g`],
     [],['28天明细']
   ];
@@ -810,6 +827,7 @@ function resetBulk(){
 $('bulk-calc').addEventListener('click', calcBulk);
 $('bulk-reset').addEventListener('click', resetBulk);
 $('bulk-dl').addEventListener('click', dlBulk);
+['custom-protein','custom-fat','custom-carb'].forEach(id=>{$(id).addEventListener('input',calcBulk)});
 
 /* ========= 食谱生成器功能 ========= */
 /* ---------- 食物数据库（参考碳循环食谱结构） ---------- */
@@ -823,7 +841,8 @@ const foodDatabase = {
   eggs:         { name: "鸡蛋",           cookedName: "鸡蛋",           carbs: 1.1, protein: 6.5, fat: 11,  cookedCarbs: 1.1, cookedProtein: 6.5, cookedFat: 11,  unit: "个", unitWeight: 50, cookingMethod: "煮", category: "protein" },
   beef:         { name: "瘦牛肉",         cookedName: "瘦牛肉",         carbs: 0,  protein: 22,  fat: 5,   cookedCarbs: 0,  cookedProtein: 32,  cookedFat: 4,   unit: "g", cookingMethod: "煮/炒", category: "protein" },
   chickenBreast:{ name: "鸡胸肉",         cookedName: "鸡胸肉",         carbs: 0,  protein: 23,  fat: 3.6, cookedCarbs: 0,  cookedProtein: 32,  cookedFat: 2,   unit: "g", cookingMethod: "煮/蒸", category: "protein" },
-  chickenThigh: { name: "鸡腿",           cookedName: "鸡腿",           carbs: 0,  protein: 20,  fat: 8,   cookedCarbs: 0,  cookedProtein: 28,  cookedFat: 10,  unit: "g", cookingMethod: "烤/煎", category: "protein" },
+  chickenThigh: { name: "鸡腿",           cookedName: "鸡腿",           carbs: 0,  protein: 20,  fat: 13,   cookedCarbs: 0,  cookedProtein: 28,  cookedFat: 16,  unit: "g", cookingMethod: "烤/煎", category: "protein" },
+  proteinPowder:{ name: "蛋白粉",         cookedName: "蛋白粉",         carbs: 4,  protein: 75,  fat: 3,   cookedCarbs: 4,  cookedProtein: 75,  cookedFat: 3,   unit: "g", cookingMethod: "冲调", category: "protein" },
   shrimp:       { name: "虾",             cookedName: "虾",             carbs: 0,  protein: 15,  fat: 3,   cookedCarbs: 0,  cookedProtein: 18,  cookedFat: 1,   unit: "g", cookingMethod: "烤/煎", category: "protein" },
   almonds:      { name: "坚果",           cookedName: "坚果",           carbs: 21, protein: 20,  fat: 54,  cookedCarbs: 21, cookedProtein: 20,  cookedFat: 54,  unit: "g", cookingMethod: "直接食用", category: "fat" },
   peanutButter: { name: "花生酱",         cookedName: "花生酱",         carbs: 20, protein: 25,  fat: 50,  cookedCarbs: 20, cookedProtein: 25,  cookedFat: 50,  unit: "g", cookingMethod: "涂抹", category: "fat" },
@@ -846,7 +865,7 @@ const foodDatabase = {
 };
 
 /* ========= 食物选择逻辑 ========= */
-const defaultFoods = { carb: ['corn', 'oats', 'wholeBread', 'rice'], protein: ['eggs', 'chickenBreast', 'chickenThigh'], fat: ['almonds', 'oliveOil'], fruit: ['banana', 'apple', 'kiwi'] };
+const defaultFoods = { carb: ['corn', 'oats', 'wholeBread', 'rice'], protein: ['eggs', 'chickenBreast', 'chickenThigh', 'proteinPowder'], fat: ['almonds', 'oliveOil'], fruit: ['banana', 'apple', 'kiwi'] };
 let selectedFoods = { carb: [...defaultFoods.carb], protein: [...defaultFoods.protein], fat: [...defaultFoods.fat], fruit: [...defaultFoods.fruit] };
 
 function loadFoodSelection() {
@@ -1065,6 +1084,7 @@ function getTrainingDays() {
 
 function generateWeeklyRecipe() {
   if (!selectedFoods.carb.length || !selectedFoods.protein.length || !selectedFoods.fat.length) return;
+  window._dailyPowder = {};
   const recipeType = $('recipe-type-select').value;
   const mealCount = parseInt($('meal-count-select').value);
   const recipeBody = $('recipe-body');
@@ -1151,6 +1171,7 @@ function generateWeeklyRecipe() {
       const mealCarbs = Math.round(dayTarget.carbs * alloc.carbsRatio);
 
       const mealFoods = selectFoodsForMeal(mealProtein, mealCarbs, mealFat, recipeType, meal, day);
+      const pf = mealFoods.find(f=>f.name==='蛋白粉'); if(pf) { if(!window._dailyPowder[day]) window._dailyPowder[day] = {}; window._dailyPowder[day][meal] = pf.g; }
       const foodStrings = renderFoodList(mealFoods);
 
       const dayCell = document.createElement('td');
@@ -1194,6 +1215,7 @@ function generateWeeklyRecipe() {
       const mealFat = Math.round(dayTarget.fat * alloc.fatRatio);
 
       const mealFoods = selectFoodsForMeal(mealProtein, remainingCarbs, mealFat, recipeType, lastMealKey, day);
+      const pf = mealFoods.find(f=>f.name==='蛋白粉'); if(pf) { if(!window._dailyPowder[day]) window._dailyPowder[day] = {}; window._dailyPowder[day][lastMealKey] = pf.g; }
       const foodStrings = renderFoodList(mealFoods);
 
       const dayCell = document.createElement('td');
@@ -1236,6 +1258,7 @@ function generateWeeklyRecipe() {
             const nonLastCarbs = dailyActuals[day].carbs - mealNutrients[day][lastMealKey].carbs;
             const finalCarbs = Math.max(0, dayTarget.carbs - nonLastCarbs);
             const mealFoods = selectFoodsForMeal(mealProtein, finalCarbs, mealFat, recipeType, lastMealKey, day);
+            const pf = mealFoods.find(f=>f.name==='蛋白粉'); if(pf) { window._dailyPowder[day][lastMealKey] = pf.g; }
             foodList.textContent = renderFoodList(mealFoods).join(' + ');
 
             // 重新计算最后一餐的营养
@@ -1335,7 +1358,8 @@ function generateWeeklyRecipe() {
 
   for (let day = 0; day < totalDays; day++) {
     const dayCell = document.createElement('td');
-    dayCell.textContent = '💊 鱼油2颗+肌酸3g+蛋白粉15g';
+    const pg = (window._dailyPowder && window._dailyPowder[day]) ? Object.values(window._dailyPowder[day]).reduce((a,b)=>a+b,0) : 0;
+    dayCell.textContent = pg > 0 ? `💊 鱼油2颗+肌酸3g+蛋白粉${pg}g` : `💊 鱼油2颗+肌酸3g+蛋白粉15g`;
     dayCell.style.fontSize = '0.7rem';
     dayCell.style.textAlign = 'center';
     dayCell.style.color = '#6b7280';
@@ -1346,7 +1370,7 @@ function generateWeeklyRecipe() {
 }
 
 function renderFoodList(mealFoods) {
-  return mealFoods.map(food => {
+  return mealFoods.filter(food => food.name !== "蛋白粉").map(food => {
     const rawWeight = Math.round(food.g);
     let cookedWeight;
     if (food.unitWeight && food.unit !== 'g') {
@@ -1363,7 +1387,7 @@ function renderFoodList(mealFoods) {
     const onlyCookedFoods = ["鸡蛋", "全麦面包", "蛋白粉", "坚果"];
     const isOnlyCooked = onlyCookedFoods.includes(food.name);
     const displayName = displayMode === 'cooked' ? (food.cookedName || food.name) : food.name;
-    const displayType = isOnlyCooked ? '熟' : (displayMode === 'raw' ? '生' : '熟');
+    const displayType = isOnlyCooked ? '熟' : (displayMode === 'raw' || food.name === '燕麦') ? '生' : '熟';
 
     let displayWeight, displayUnit;
     if (food.unitWeight && food.unit !== 'g') {
@@ -1407,7 +1431,8 @@ function selectFoodsForMeal(proteinTarget, carbsTarget, fatTarget, recipeType, m
   const proteinPool = selectedFoods.protein.map(id => foodDatabase[id]).filter(Boolean);
   const fatPool = selectedFoods.fat.map(id => foodDatabase[id]).filter(Boolean);
   // 肉类蛋白质（排除鸡蛋）
-  const meatPool = proteinPool.filter(f => f.name !== "鸡蛋");
+  const meatPool = proteinPool.filter(f => f.name !== "鸡蛋" && f.name !== "蛋白粉");
+  const powderFood = proteinPool.find(f => f.name === "蛋白粉");
   // 鸡蛋
   const eggsFood = proteinPool.find(f => f.name === "鸡蛋");
 
@@ -1422,8 +1447,12 @@ function selectFoodsForMeal(proteinTarget, carbsTarget, fatTarget, recipeType, m
   if (finalCarbPool.length > 0) {
     const carbFood = pickFromPool(finalCarbPool, dayIndex);
     let g = Math.round(carbsTarget / carbFood.carbs * 100);
+    // 面包按50g取整
+    if (carbFood.name === "全麦面包" && g > 0) {
+      g = Math.max(50, Math.round(g/50)*50);
+    }
     // 早餐燕麦上限60g，超出碳水由午晚餐吸收
-    if (meal === 'breakfast' && carbFood.name === "燕麦" && g > 60) {
+    if (meal === 'breakfast' && carbFood.name === "燕麦" && g > 65) {
       g = 60;
     }
     items.push({ ...carbFood, g });
@@ -1441,22 +1470,58 @@ function selectFoodsForMeal(proteinTarget, carbsTarget, fatTarget, recipeType, m
     const meatFood = pickFromPool(meatPool, dayIndex);
     const needP = proteinTarget - items.reduce((s, it) => s + it.protein * it.g / 100, 0);
     if (needP > 0) {
-      const g = Math.round(needP / meatFood.protein * 100);
-      items.push({ ...meatFood, g });
+      let g = Math.round(needP / meatFood.protein * 100);
+      // 控制脂肪：预留橄榄油保底3g+坚果保底2g
+      const reserveF = 3 + 2;
+      const currFat = items.reduce((s, it) => s + it.fat * it.g / 100, 0);
+      const maxMeatF = fatTarget - currFat - reserveF;
+      const meatFatG = g * meatFood.fat / 100;
+      if (meatFatG > maxMeatF && maxMeatF > 5 && powderFood) {
+        const maxG = Math.max(30, Math.floor(maxMeatF / (meatFood.fat / 100)));
+        const proteinGap = needP - maxG * meatFood.protein / 100;
+        g = maxG;
+        items.push({ ...meatFood, g });
+        if (proteinGap > 1) {
+          const pg = Math.round(proteinGap / (powderFood.protein / 100));
+          items.push({ ...powderFood, g: pg });
+        }
+      } else {
+        items.push({ ...meatFood, g });
+      }
     }
   }
 
-  // === 脂肪 ===
+  // === 脂肪：先烹饪油，再补坚果/花生酱 ===
   if (fatPool.length > 0) {
-    const needF = fatTarget - items.reduce((s, it) => s + it.fat * it.g / 100, 0);
-    if (needF > 0.5) {
-      const fatFood = pickFromPool(fatPool, dayIndex);
-      let g = Math.round(needF / fatFood.fat * 100);
-      if (fatFood.name === "橄榄油" && g > 15) g = 15;
-      if (fatFood.name === "坚果" && (meal === 'lunch' || meal === 'dinner') && g > 20) g = 20;
-      if (fatFood.name === "坚果" && meal === 'breakfast' && g > 10) g = 10;
-      if (g > 0) {
-        items.push({ ...fatFood, g });
+    // 烹饪用油：橄榄油中晚餐保底3ml，上限15ml
+    const isOliveMeal = selectedFoods.fat.includes('oliveOil')&&fatPool.some(f=>f.name==='橄榄油')&&(meal==='lunch'||meal==='dinner');
+    if (isOliveMeal) {
+      const rawNeed = fatTarget - items.reduce((s, it) => s + it.fat * it.g / 100, 0);
+      const oliveF = fatPool.find(f=>f.name==='橄榄油');
+      let g = Math.round(Math.max(3, rawNeed) / oliveF.fat * 100);
+      if (g > 15) g = 15;
+      items.push({ ...oliveF, g });
+    }
+    // 补充脂肪：坚果/花生酱 — 仅在脂肪有缺口时添加
+    const nutPool = fatPool.filter(f => f.name !== '橄榄油');
+    if (nutPool.length > 0) {
+      const curFat = items.reduce((s, it) => s + it.fat * it.g / 100, 0);
+      const needNF = fatTarget - curFat;
+      if (needNF > 0.5) {
+        const nutFood = pickFromPool(nutPool, dayIndex);
+        let g = Math.round(needNF / nutFood.fat * 100);
+        if (nutFood.name === "坚果" && (meal === 'lunch' || meal === 'dinner') && g > 20) g = 20;
+        if (nutFood.name === "坚果" && meal === 'breakfast' && g > 10) g = 10;
+        if (g > 0) items.push({ ...nutFood, g });
+      }
+    } else if (!isOliveMeal) {
+      const needF = fatTarget - items.reduce((s, it) => s + it.fat * it.g / 100, 0);
+      if (needF > 0.5) {
+        const fatFood = pickFromPool(fatPool, dayIndex);
+        let g = Math.round(needF / fatFood.fat * 100);
+        if (fatFood.name === "坚果" && (meal === 'lunch' || meal === 'dinner') && g > 20) g = 20;
+        if (fatFood.name === "坚果" && meal === 'breakfast' && g > 10) g = 10;
+        if (g > 0) items.push({ ...fatFood, g });
       }
     }
   }
