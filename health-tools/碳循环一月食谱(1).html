@@ -475,6 +475,17 @@ const vegetableNutrients = {
   tomato:     { vitA: 42, vitC: 14, vitD: 0, vitE: 0.5, vitB1: 0.04, vitB2: 0.02, vitB6: 0.08, vitB12: 0, folate: 15, niacin: 0.6, calcium: 10, iron: 0.3, zinc: 0.2, magnesium: 11, selenium: 0 }
 }
 
+/* ---------- 蔬菜生熟比例（100g 熟 → 生重倍数，基准 150g 熟） ---------- */
+const vegetableRawRatio = {
+  spinach:    1.80,
+  broccoli:   1.30,
+  cabbage:    1.40,
+  lettuce:    1.50,
+  bellpepper: 1.20,
+  carrot:     1.30,
+  tomato:     1.10
+}
+
 /* ---------- 蓝莓营养素（每50g） ---------- */
 const blueberryNutrients = { vitA: 3, vitC: 5, vitD: 0, vitE: 0.3, vitB1: 0.02, vitB2: 0.02, vitB6: 0.03, vitB12: 0, folate: 3, niacin: 0.2, calcium: 3, iron: 0.1, zinc: 0.1, magnesium: 3, selenium: 0 }
 
@@ -1028,40 +1039,68 @@ function generateRecipes(carbMap, dailyMacros, weekPrefix = '', vegetableAssignm
         }
       }
 
+      /* 生重表:不写标签的水果/坚果/橄榄油等;燕麦固定生;鸡蛋固定熟;其他(生)+≈Xg熟换算 */
+      const noLabelFoods = new Set(["香蕉","苹果","蓝莓","猕猴桃","橙子","葡萄柚","草莓","牛油果","坚果","花生酱","橄榄油","椰子油","黄油","核桃","腰果","芝麻酱","黑巧克力","全脂牛奶","蛋白粉","金枪鱼罐头","奶酪","蛋清","天贝","北豆腐"]);
       return {text: items.map(it=>{
+        const showLabel = !noLabelFoods.has(it.name);
+        const labelType = (it.name === "燕麦" || it.name === "燕麦片") ? "生" : (it.name === "水煮蛋" || it.name === "鸡蛋") ? "熟" : "生";
+        /* 剥离 foodDatabase 中 name 字段已 baked-in 的 (生)/(熟)，避免重复标签 */
+        const cleanName = it.name.replace(/[（(](?:生|熟)[)）]/g, '');
+        const label = showLabel ? `(${labelType})` : '';
         if (it.name === "蛋白粉") {
           const scoops = (it.g / 30).toFixed(1)
-          return `${it.name} ${it.g}g (约${scoops}勺)`
+          return `${cleanName} ${it.g}g (约${scoops}勺)`
         }
         if (it.unit) {
           const raw = it.g / it.unitWeight
           if (it.unit === '个') {
             const num = Math.max(1, Math.round(raw))
-            return `${it.name} ${num}${it.unit}`
+            let s = `${cleanName}${label} ${num}${it.unit}`;
+            if (showLabel && it.name !== "水煮蛋" && it.name !== "鸡蛋" && it.cookedCarbs!==undefined && it.cookedCarbs>0 && it.cookedCarbs!==it.carbs) {
+              const c = Math.round((it.g/it.cookedCarbs)*it.carbs);
+              if (Math.abs(c-it.g)>=2) s += ` ≈熟 ${c}g`;
+            } else if (showLabel && it.name !== "水煮蛋" && it.name !== "鸡蛋" && it.cookedProtein!==undefined && it.cookedProtein>0 && it.cookedProtein!==it.protein) {
+              const c = Math.max(1, Math.round((it.g/it.cookedProtein)*it.protein));
+              if (Math.abs(c-it.g)>=2) s += ` ≈熟 ${c}g`;
+            }
+            return s;
           }
           if (it.unit === '根') {
             if (raw < 0.1) return ''
-            if (raw < 1) {
-              return `${it.name} 0.5${it.unit}`
-            }
-            if (raw < 1.6) {
-              return `${it.name} 1${it.unit}`
-            }
-            if (raw < 2) {
-              return `${it.name} 1.5${it.unit}`
-            }
+            if (raw < 1) return `${cleanName}${label} 0.5${it.unit}`;
+            if (raw < 1.6) return `${cleanName}${label} 1${it.unit}`;
+            if (raw < 2) return `${cleanName}${label} 1.5${it.unit}`;
             const num = Math.round(raw * 2) / 2
             const display = num % 1 === 0 ? num.toFixed(0) : num.toFixed(1)
-            return `${it.name} ${display}${it.unit}`
+            let s = `${cleanName}${label} ${display}${it.unit}`;
+            if (showLabel && it.cookedCarbs!==undefined && it.cookedCarbs>0 && it.cookedCarbs!==it.carbs) {
+              const c = Math.round((it.g/it.cookedCarbs)*it.carbs);
+              if (Math.abs(c-it.g)>=2) s += ` ≈熟 ${c}g`;
+            }
+            return s;
           }
           if (it.unit === '片') {
             const num = Math.max(1, Math.round(raw))
-            return `${it.name} ${num}${it.unit}`
+            return `${cleanName}${label} ${num}${it.unit}`;
           }
           const num = raw.toFixed(1)
-          return `${it.name} ${num}${it.unit}`
+          return `${cleanName}${label} ${num}${it.unit}`;
         }
-        return `${it.name} ${it.g}g`
+        /* g 分支：name+label → 主重量 it.g g（带 (生) 标签） → 可选：≈熟 c_g（c 是等价的熟重） */
+        let s = `${cleanName}${label} ${it.g}g`;
+        if (showLabel && it.name !== "水煮蛋" && it.name !== "鸡蛋") {
+          let c = null;
+          if (it.cookedCarbs!==undefined && it.cookedCarbs>0 && it.cookedCarbs!==it.carbs) {
+            /* 生→熟：raw_g × raw_d / cooked_d（即 c = it.g * X / cookedX） */
+            c = Math.round((it.g/it.cookedCarbs)*it.carbs);
+          } else if (it.cookedProtein!==undefined && it.cookedProtein>0 && it.cookedProtein!==it.protein) {
+            c = Math.max(1, Math.round((it.g/it.cookedProtein)*it.protein));
+          } else if (it.cookedFat!==undefined && it.cookedFat>0 && it.cookedFat!==it.fat) {
+            c = Math.round((it.g/it.cookedFat)*it.fat);
+          }
+          if (c !== null && Math.abs(c-it.g)>=2) s += ` ≈熟 ${c}g`;
+        }
+        return s;
       }).join(' + '), items, meal}
     })
 
@@ -1093,7 +1132,9 @@ function generateRecipes(carbMap, dailyMacros, weekPrefix = '', vegetableAssignm
         if (meal === 'breakfast') {
           extra = '<br>+ 蓝莓 50g';
         } else if (meal === 'lunch' || meal === 'dinner') {
-          extra = `<br>+ ${vegetableNames[dayVegetable]} 150g`;
+          const vegRatio = vegetableRawRatio[dayVegetable] || 1;
+          const rawVegG = Math.round(150 * vegRatio);
+          extra = `<br>+ ${vegetableNames[dayVegetable]} ${rawVegG}g(生) ≈熟 150g`;
         }
         el.innerHTML = plan[idx].text + extra;
         el.className = level
@@ -1527,40 +1568,71 @@ function generateCookedRecipes(carbMap, dailyMacros, weekPrefix = '', vegetableA
         }
       }
 
+      /* 熟重表:不写标签的水果/坚果/橄榄油等;燕麦固定生;水煮蛋/鸡蛋固定熟;其他(熟)+≈Xg生换算 */
+      const noLabelFoods = new Set(["香蕉","苹果","蓝莓","猕猴桃","橙子","葡萄柚","草莓","牛油果","坚果","花生酱","橄榄油","椰子油","黄油","核桃","腰果","芝麻酱","黑巧克力","全脂牛奶","蛋白粉","金枪鱼罐头","奶酪","蛋清","天贝","北豆腐"]);
       return {text: items.map(it=>{
+        const dispNameRaw = it.cookedName || it.name;
+        /* 剥离 cookedName/name 中已 baked-in 的 (生)/(熟)，避免重复标签 */
+        const dispName = dispNameRaw.replace(/[（(](?:生|熟)[)）]/g, '');
+        const cleanNameForType = it.name.replace(/[（(](?:生|熟)[)）]/g, '');
+        const showLabel = !noLabelFoods.has(it.name);
+        const labelType = (cleanNameForType === "燕麦" || cleanNameForType === "燕麦片") ? "生" : "熟";
+        const label = showLabel ? `(${labelType})` : '';
         if (it.name === "蛋白粉") {
           const scoops = (it.g / 30).toFixed(1)
-          return `${it.cookedName || it.name} ${it.g}g (约${scoops}勺)`
+          return `${dispName} ${it.g}g (约${scoops}勺)`
         }
         if (it.unit) {
           const raw = it.g / it.unitWeight
           if (it.unit === '个') {
             const num = Math.max(1, Math.round(raw))
-            return `${it.cookedName || it.name} ${num}${it.unit}`
+            let s = `${dispName}${label} ${num}${it.unit}`;
+            if (showLabel && it.name !== "水煮蛋" && it.name !== "鸡蛋" && it.cookedCarbs!==undefined && it.cookedCarbs>0 && it.cookedCarbs!==it.carbs) {
+              /* 熟→生：cooked_g × cooked_d / raw_d（即 r = it.g * cookedX / X） */
+              const r = Math.round((it.g/it.carbs)*it.cookedCarbs);
+              if (Math.abs(r-it.g)>=2) s += ` ≈生 ${r}g`;
+            } else if (showLabel && it.name !== "水煮蛋" && it.name !== "鸡蛋" && it.cookedProtein!==undefined && it.cookedProtein>0 && it.cookedProtein!==it.protein) {
+              const r = Math.max(1, Math.round((it.g/it.protein)*it.cookedProtein));
+              if (Math.abs(r-it.g)>=2) s += ` ≈生 ${r}g`;
+            }
+            return s;
           }
           if (it.unit === '根') {
             if (raw < 0.1) return ''
-            if (raw < 1) {
-              return `${it.cookedName || it.name} 0.5${it.unit}`
-            }
-            if (raw < 1.6) {
-              return `${it.cookedName || it.name} 1${it.unit}`
-            }
-            if (raw < 2) {
-              return `${it.cookedName || it.name} 1.5${it.unit}`
-            }
+            if (raw < 1) return `${dispName}${label} 0.5${it.unit}`;
+            if (raw < 1.6) return `${dispName}${label} 1${it.unit}`;
+            if (raw < 2) return `${dispName}${label} 1.5${it.unit}`;
             const num = Math.round(raw * 2) / 2
             const display = num % 1 === 0 ? num.toFixed(0) : num.toFixed(1)
-            return `${it.cookedName || it.name} ${display}${it.unit}`
+            let s = `${dispName}${label} ${display}${it.unit}`;
+            if (showLabel && it.cookedCarbs!==undefined && it.cookedCarbs>0 && it.cookedCarbs!==it.carbs) {
+              const r = Math.round((it.g/it.carbs)*it.cookedCarbs);
+              if (Math.abs(r-it.g)>=2) s += ` ≈生 ${r}g`;
+            }
+            return s;
           }
           if (it.unit === '片') {
             const num = Math.max(1, Math.round(raw))
-            return `${it.cookedName || it.name} ${num}${it.unit}`
+            return `${dispName}${label} ${num}${it.unit}`;
           }
           const num = raw.toFixed(1)
-          return `${it.cookedName || it.name} ${num}${it.unit}`
+          return `${dispName}${label} ${num}${it.unit}`;
         }
-        return `${it.cookedName || it.name} ${it.g}g`
+        /* g 分支：name+label → 主重量 it.g g → 可选：≈生 r_g（r 是等价的生重） */
+        let s = `${dispName}${label} ${it.g}g`;
+        if (showLabel && it.name !== "水煮蛋" && it.name !== "鸡蛋") {
+          if (it.cookedCarbs!==undefined && it.cookedCarbs>0 && it.cookedCarbs!==it.carbs) {
+            const r = Math.round((it.g/it.carbs)*it.cookedCarbs);
+            if (Math.abs(r-it.g)>=2) s += ` ≈生 ${r}g`;
+          } else if (it.cookedProtein!==undefined && it.cookedProtein>0 && it.cookedProtein!==it.protein) {
+            const r = Math.max(1, Math.round((it.g/it.protein)*it.cookedProtein));
+            if (Math.abs(r-it.g)>=2) s += ` ≈生 ${r}g`;
+          } else if (it.cookedFat!==undefined && it.cookedFat>0 && it.cookedFat!==it.fat) {
+            const r = Math.round((it.g/it.fat)*it.cookedFat);
+            if (Math.abs(r-it.g)>=2) s += ` ≈生 ${r}g`;
+          }
+        }
+        return s;
       }).join(' + '), items, meal}
     })
 
@@ -1592,7 +1664,9 @@ function generateCookedRecipes(carbMap, dailyMacros, weekPrefix = '', vegetableA
         if (meal === 'breakfast') {
           extra = '<br>+ 蓝莓 50g';
         } else if (meal === 'lunch' || meal === 'dinner') {
-          extra = `<br>+ ${vegetableNames[dayVegetable]} 150g`;
+          const vegRatio = vegetableRawRatio[dayVegetable] || 1;
+          const rawVegG = Math.round(150 * vegRatio);
+          extra = `<br>+ ${vegetableNames[dayVegetable]} 150g(熟) ≈生 ${rawVegG}g`;
         }
         el.innerHTML = plan[idx].text + extra;
         el.className = level
